@@ -33,7 +33,7 @@ async function inspect(name,url,width,height) {
   await command("Page.navigate",{url},sessionId);
   await new Promise((resolve) => setTimeout(resolve,1200));
   const inspected = await command("Runtime.evaluate",{
-    expression:`JSON.stringify({title:document.title,innerWidth,bodyWidth:document.body.scrollWidth,documentWidth:document.documentElement.scrollWidth,sidebarVisible:Boolean(document.querySelector('.sidebar')?.offsetParent),apiError:document.body.textContent.includes('Servizio dati non disponibile')})`,
+    expression:`JSON.stringify({title:document.title,innerWidth,bodyWidth:document.body.scrollWidth,documentWidth:document.documentElement.scrollWidth,sidebarVisible:Boolean(document.querySelector('.sidebar')?.offsetParent),apiError:document.body.textContent.includes('Servizio dati non disponibile'),collectionVisible:Boolean(document.querySelector('.collection-page')),mode:document.body.className,brandRect:document.querySelector('.collection-brand .brand-mark')?.getBoundingClientRect().toJSON(),headerBackground:document.querySelector('.collection-header')&&getComputedStyle(document.querySelector('.collection-header')).backgroundColor})`,
     returnByValue:true
   },sessionId);
   const screenshot = await command("Page.captureScreenshot",{format:"png",captureBeyondViewport:false},sessionId);
@@ -46,6 +46,8 @@ const token = process.argv[2];
 const results = [];
 results.push(await inspect("overview-desktop","http://127.0.0.1:4173/?page=overview",1440,970));
 results.push(await inspect("overview-mobile","http://127.0.0.1:4173/?page=overview",390,844));
-results.push(await inspect("survey-mobile",`http://127.0.0.1:4173/?page=survey&token=${encodeURIComponent(token)}`,390,844));
+results.push(await inspect("collection-desktop",`http://127.0.0.1:4173/compila/${encodeURIComponent(token)}`,1440,970));
+results.push(await inspect("collection-mobile",`http://127.0.0.1:4173/compila/${encodeURIComponent(token)}`,390,844));
+results.push(await inspect("confirmation-mobile",`http://127.0.0.1:4173/compila/${encodeURIComponent(token)}/conferma`,390,844));
 console.log(JSON.stringify(results,null,2));
 socket.close();

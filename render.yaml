@@ -9,3 +9,11 @@ services:
     envVars:
       - key: NODE_VERSION
         value: 22.14.0
+      - key: COLLECTION_MODE
+        value: proprietary
+      - key: DEMO_VIEW_SWITCHER
+        value: "true"
+      - key: APP_PUBLIC_URL
+        value: https://sdf-network-performance.onrender.com
+      - key: DEALER_LINK_SECRET
+        generateValue: true

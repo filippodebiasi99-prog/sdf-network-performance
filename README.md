@@ -1,91 +1,76 @@
-# SDF KPI Portal MVP
+# SDF Network Performance Portal
 
-Portale locale funzionante per raccogliere, monitorare e analizzare i KPI della rete concessionari SDF.
+Portale demo Node.js/SQLite per concessionari, campagne annuali, questionario KPI proprietario, bozze, submission, benchmark, note, report e audit.
 
-## Avvio rapido
+## Workflow MVP
 
-Requisito: Node.js 22.5 o successivo.
+JET → crea o importa i dealer → crea una rilevazione → condivide link o QR → il dealer compila e può salvare una bozza → invia definitivamente → dashboard e Analisi KPI leggono gli stessi dati SQLite → SDF consulta in sola lettura.
+
+Il dealer non ha un account: il link opaco `/compila/:token` identifica dealer e campagna. Il questionario proprietario è il flusso predefinito; Jotform resta un'integrazione opzionale disattivata.
+
+## Avvio e test
+
+Richiede Node.js 22.5 o successivo.
 
 ```bash
+npm install
 npm start
+npm test
+npm run build
 ```
 
-Aprire `http://127.0.0.1:4173`. Al primo avvio il server crea e popola automaticamente `data/sdf-kpi.sqlite`.
+Aprire `http://127.0.0.1:4173`. Il database demo viene creato/migrato in `data/sdf-kpi.sqlite`. `npm run reset` ricrea esclusivamente il database demo.
 
-Non aprire `index.html` direttamente: la dashboard usa le API del server.
+Configurazione minima:
 
-## Deploy gratuito su Render
+```dotenv
+COLLECTION_MODE=proprietary
+DEMO_VIEW_SWITCHER=true
+APP_PUBLIC_URL=http://127.0.0.1:4173
+DEALER_LINK_SECRET=
+```
 
-Il repository include `render.yaml`. Collegando il repository a Render come Blueprint, il servizio viene creato con piano Free, avvio `npm start` e health check `/api/health`.
+Non servono credenziali Jotform. Il selettore “Vista JET / Vista SDF” è dimostrativo e modifica sia le azioni UI sia le autorizzazioni delle API di scrittura; non sostituisce autenticazione e ruoli reali.
 
-Il filesystem dei servizi Render Free è effimero: SQLite viene ricreato con i dati demo dopo alcuni riavvii o sospensioni. Per conservare dati aziendali reali serve un database persistente o un piano con disco persistente.
+## Questionario e KPI
 
-## Flussi disponibili
+La fonte unica è [`config/kpi-questionnaire.js`](config/kpi-questionnaire.js). Definisce 20 campi dimostrativi, metadati, sezioni, limiti, decimali, ordine e versione `demo-v1`. La stessa configurazione alimenta UI, validazione client/server, dettaglio dealer, Analisi KPI ed export.
 
-- Overview calcolata dal database.
-- Elenco concessionari con ricerca e filtri.
-- Dettaglio dealer, benchmark e note JET.
-- Analisi KPI con aggregazioni e ranking.
-- Gestione visuale delle campagne.
-- Importazione o aggiornamento dell'anagrafica concessionari da CSV.
-- Preparazione dell'elenco reminder per dealer non compilati o in bozza.
-- Export CSV reale.
-- Questionario concessionario tramite link univoco.
-- Salvataggio bozza, validazione e invio definitivo.
-- Aggiornamento immediato della dashboard dopo l'invio.
+Sono calcolati otto KPI derivati documentati nel modulo: totale unità, conversione preventivi, raggiungimento target fatturato/ricambi, utilizzo ed efficienza officina, ricavo per unità e per ordine di lavoro. Con denominatore zero o dati mancanti il risultato non viene salvato: niente `NaN` o `Infinity`; la UI mostra “Non calcolabile”.
 
-Per trovare un link di compilazione demo, aprire un concessionario dalla dashboard e selezionare **Apri compilazione**.
-
-## Come inserisce i dati l'azienda
-
-1. JET scarica il tracciato da **Report → Scarica template CSV**.
-2. Compila il file in Excel con Dealer ID, ragione sociale, regione, area, area manager ed email.
-3. Salva in CSV e lo carica da **Concessionari → Importa CSV**.
-4. Apre il dettaglio del concessionario e condivide il link **Apri compilazione**.
-5. Il concessionario salva una bozza o invia tutti i KPI; overview, analisi e report si aggiornano dal database.
-
-Il comando **Prepara reminder** genera e registra l'elenco dei destinatari. Per spedire email vere occorre collegare un provider aziendale.
-
-## Comandi
-
-| Comando | Descrizione |
-|---|---|
-| `npm start` | Avvia server, API e frontend |
-| `npm run dev` | Avvia con riavvio automatico |
-| `npm test` | Esegue i test API end-to-end |
-| `npm run reset` | Elimina e ricrea il database demo |
+Il dealer può salvare manualmente o con autosalvataggio debounced (1,8 secondi), riaprire la bozza dallo stesso link, rivedere un riepilogo e inviare. Dopo l'invio il form è bloccato; JET può impostare `NEEDS_REVIEW`, `VALIDATED` o `REOPENED`. Gli stati gestiti sono `NOT_STARTED`, `DRAFT`, `SUBMITTED`, `NEEDS_REVIEW`, `VALIDATED`, `REOPENED`.
 
 ## API principali
 
 | Metodo | Endpoint | Funzione |
 |---|---|---|
-| GET | `/api/overview` | Avanzamento e dati operativi |
-| GET | `/api/dealers` | Elenco filtrabile dealer |
-| GET | `/api/dealers/:id` | Dettaglio e benchmark |
-| POST | `/api/dealers/import` | Import anagrafica da CSV |
-| POST | `/api/dealers/:id/notes` | Inserimento nota JET |
-| POST | `/api/reminders/prepare` | Elenco reminder da inviare |
-| GET | `/api/analysis` | Statistiche per KPI |
-| GET | `/api/campaigns` | Campagne e avanzamento |
-| GET | `/api/survey/:token` | Questionario concessionario |
-| PUT | `/api/survey/:token/draft` | Salvataggio bozza |
-| POST | `/api/survey/:token/submit` | Invio definitivo validato |
-| GET | `/api/reports/csv` | Export completo CSV |
-| GET | `/api/dealers/template.csv` | Template anagrafica dealer |
+| GET | `/api/overview` | Avanzamento reale da SQLite |
+| GET | `/api/dealers` | Dealer e stati raccolta |
+| GET | `/api/dealers/:id` | KPI, storico e raccolta |
+| POST | `/api/dealers/import` | Import anagrafica CSV, non KPI |
+| GET/POST | `/api/dealers/:id/collection-link/*` | Link, revoca e rigenerazione JET |
+| POST | `/api/dealers/:id/submission/status` | Validazione o riapertura JET |
+| GET | `/api/collection-links/:id/qr.svg` | QR verso il portale |
+| GET | `/api/compila/:token` | Questionario dealer |
+| PUT/POST | `/api/compila/:token/draft\|submit` | Bozza o invio definitivo |
+| GET | `/api/analysis` | Media, mediana, min, max, ranking |
+| GET | `/api/reports/csv` | Export rete |
 
-## Architettura
+Gli endpoint legacy `/api/survey/:token` e il modulo Jotform restano disponibili per compatibilità. Con `COLLECTION_MODE=proprietary`, webhook, sync, iframe e chiamate API Jotform sono disattivati. La configurazione opzionale è descritta in [`docs/jotform-setup.md`](docs/jotform-setup.md).
 
-Il server usa solo moduli nativi Node.js e SQLite. Le definizioni KPI, i dati inseriti, le campagne e le note sono persistenti. La decisione è documentata in [ADR-001](docs/decisions/ADR-001-local-mvp-stack.md).
+## Migrazione database
 
-## Confini del MVP
+L'avvio aggiunge in modo non distruttivo metadati del questionario alle definizioni KPI e `questionnaire_version`, issue e revisione alle submission. I KPI legacy sono conservati ma marcati inattivi; i dati demo compatibili vengono migrati e completati per `demo-v1`. Non vengono eliminate compilazioni, note o audit esistenti.
 
-Il link token è adatto a una dimostrazione o a un pilota controllato, non alla produzione pubblica. Prima del deploy aziendale servono:
+Decisioni: [ADR-001](docs/decisions/ADR-001-local-mvp-stack.md), [ADR-002](docs/decisions/ADR-002-jotform-collection-integration.md), [ADR-003](docs/decisions/ADR-003-proprietary-questionnaire.md).
 
-- autenticazione SSO o account gestiti;
-- autorizzazione per ruoli JET/SDF/dealer;
-- CSRF protection, rate limiting e gestione sicura dei segreti;
-- hosting e backup gestiti;
-- privacy assessment e informative;
-- migrazione eventuale a PostgreSQL per concorrenza elevata;
-- email provider per reminder reali;
-- generazione PDF lato server.
+## Limiti
+
+- I 20 KPI e le formule sono dimostrativi e devono essere definiti con il cliente.
+- Le rilevazioni sono una o due campagne annuali, non raccolte giornaliere o mensili.
+- Reminder preparati e auditati, ma nessuna email viene realmente spedita.
+- Il selettore ruoli non è autenticazione; mancano login, SSO e autorizzazioni production-grade.
+- SQLite sul piano Free di Render può essere effimero; mancano database gestito, backup, privacy e hosting definitivo.
+- Jotform è opzionale e richiede configurazione separata solo se riattivato.
+
+Il sistema non è pronto per dati aziendali reali.

@@ -25,15 +25,15 @@ test("health and overview are calculated from SQLite", async () => {
   const health = await fetch(`${baseUrl}/api/health`).then((response) => response.json());
   assert.equal(health.status, "ok");
   const overview = await fetch(`${baseUrl}/api/overview`).then((response) => response.json());
-  assert.deepEqual(overview.totals, { dealers:18, received:14, completed:11, missing:4, verify:3, completion:78 });
+  assert.deepEqual(overview.totals, { dealers:18,received:14,completed:11,submitted:11,validated:0,drafts:0,reopened:0,notStarted:4,missing:4,verify:3,completion:61 });
   assert.ok(overview.timeline.length > 0);
 });
 
 test("frontend assets are served with the correct content types", async () => {
   const assets = [
-    ["/styles.css?v=6","text/css"],
+    ["/styles.css?v=7","text/css"],
     ["/app.js?v=2","text/javascript"],
-    ["/portal.js?v=2","text/javascript"]
+    ["/portal.js?v=4","text/javascript"]
   ];
   for (const [asset,contentType] of assets) {
     const response = await fetch(`${baseUrl}${asset}`);
@@ -50,8 +50,9 @@ test("dealer filters and details return stored values", async () => {
   const detail = await fetch(`${baseUrl}/api/dealers/IT-0018`).then((response) => response.json());
   assert.equal(detail.dealer.name, "AgriVerde S.r.l.");
   assert.equal(detail.dealer.access_token, undefined);
-  assert.equal(detail.values.length, 10);
-  assert.ok(detail.surveyUrl.includes("page=survey"));
+  assert.equal(detail.values.length, 28);
+  assert.match(detail.surveyUrl,/\/compila\//);
+  assert.equal(detail.collectionLink.status,"ACTIVE");
 });
 
 test("dealer can save a draft and submit all KPI values", async () => {
@@ -76,7 +77,7 @@ test("final submission rejects missing required KPI values", async () => {
   const response = await fetch(`${baseUrl}/api/survey/${token}/submit`, { method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify({values:{}}) });
   assert.equal(response.status, 422);
   const payload = await response.json();
-  assert.equal(Object.keys(payload.details).length, 10);
+  assert.equal(Object.keys(payload.details).length, 28);
 });
 
 test("CSV export contains dealer and KPI columns", async () => {

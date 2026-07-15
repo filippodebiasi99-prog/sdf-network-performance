@@ -3,3 +3,7 @@ data/*.sqlite-shm
 data/*.sqlite-wal
 .DS_Store
 *.png
+node_modules/
+.env
+*.log
+qa-artifacts/
