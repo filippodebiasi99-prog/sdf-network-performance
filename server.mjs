@@ -409,7 +409,7 @@ function dealerDetail(database, dealerId, campaignId, request) {
   const previousSubmission = database.prepare("SELECT s.* FROM submissions s JOIN campaigns c ON c.id=s.campaign_id WHERE s.dealer_id=? AND s.campaign_id<>? ORDER BY c.year DESC,c.survey_no DESC LIMIT 1").get(dealerId,campaign.id);
   const compatible = !previousSubmission || previousSubmission.questionnaire_version === submission?.questionnaire_version;
   const values = database.prepare(`
-    SELECT k.id,k.code,k.name,k.description,k.unit,k.kind,k.required,k.min_value,k.max_value,k.sort_order,
+    SELECT k.id,k.code,k.name,k.description,k.unit,k.kind,k.required,k.min_value,k.max_value,k.sort_order,k.section,k.decimals,k.derived,
       v.value,
       (SELECT AVG(v2.value) FROM kpi_values v2 JOIN submissions s2 ON s2.id=v2.submission_id WHERE v2.kpi_id=k.id AND s2.campaign_id=? AND s2.status IN ('submitted','verify')) AS network_avg,
       (SELECT vp.value FROM kpi_values vp WHERE vp.kpi_id=k.id AND vp.submission_id=?) AS previous_value
@@ -512,6 +512,30 @@ function collectionPayload(database, token, { recordOpen = false } = {}) {
   };
 }
 
+function storedQuestionnaireValues(database, submissionId) {
+  if (!submissionId) return {};
+  return Object.fromEntries(database.prepare(`SELECT k.code,v.value FROM kpi_values v JOIN kpi_definitions k ON k.id=v.kpi_id
+    WHERE v.submission_id=? AND k.active=1 AND k.derived=0`).all(submissionId).map((row) => [row.code,row.value]));
+}
+
+function questionnaireValueChanges(previousValues, nextValues) {
+  return questionnaireFields.flatMap((field) => {
+    const previous = previousValues[field.code] ?? null;
+    const next = nextValues[field.code] ?? null;
+    return Object.is(previous,next) ? [] : [{ code:field.code,previous,next }];
+  });
+}
+
+function replaceQuestionnaireValues(database, submissionId, inputValues, sourceType) {
+  const derived = calculateDerivedKpis(inputValues);
+  database.prepare("DELETE FROM kpi_values WHERE submission_id=? AND kpi_id IN (SELECT id FROM kpi_definitions WHERE active=1)").run(submissionId);
+  const definition = database.prepare("SELECT id FROM kpi_definitions WHERE code=? AND active=1");
+  const insert = database.prepare("INSERT INTO kpi_values(submission_id,kpi_id,value,note,source_type) VALUES(?,?,?,?,?)");
+  for (const [code,value] of Object.entries(inputValues)) insert.run(submissionId,definition.get(code).id,value,"",sourceType);
+  for (const [code,value] of Object.entries(derived)) insert.run(submissionId,definition.get(code).id,value,"",`${sourceType}_DERIVED`);
+  return derived;
+}
+
 function saveProprietaryCollection(database, token, inputValues, finalSubmit) {
   const payload = collectionPayload(database,token);
   if (payload.campaign.status !== "open") throw Object.assign(new Error("La campagna non è aperta"),{ status:409 });
@@ -522,24 +546,52 @@ function saveProprietaryCollection(database, token, inputValues, finalSubmit) {
   const normalized = Object.entries(validatedValues).map(([code,value]) => ({ code,value }));
   const link = resolveDealerLink(database,token);
   const submittedAt = finalSubmit ? new Date().toISOString() : null;
+  const existingSubmission = database.prepare("SELECT id,collection_status FROM submissions WHERE dealer_id=? AND campaign_id=?").get(link.dealer_id,link.campaign_id);
+  const previousValues = storedQuestionnaireValues(database,existingSubmission?.id);
+  let auditPreviousValues = previousValues;
+  if (finalSubmit && existingStatus === "REOPENED") {
+    const reopenedAudit = database.prepare("SELECT payload FROM audit_events WHERE dealer_id=? AND campaign_id=? AND event_type='submission_reopened' ORDER BY id DESC LIMIT 1").get(link.dealer_id,link.campaign_id);
+    try { auditPreviousValues = JSON.parse(reopenedAudit?.payload || "{}").originalValues || previousValues; } catch { auditPreviousValues = previousValues; }
+  }
+  const changes = questionnaireValueChanges(auditPreviousValues,validatedValues);
   const inputMap = validatedValues;
-  const derived = calculateDerivedKpis(inputMap);
   const warnings = finalSubmit ? questionnaireWarnings(inputMap) : [];
-  const collectionStatus = finalSubmit ? (warnings.length ? "NEEDS_REVIEW" : "SUBMITTED") : "DRAFT";
+  const collectionStatus = finalSubmit ? (warnings.length ? "NEEDS_REVIEW" : "SUBMITTED") : existingStatus === "REOPENED" ? "REOPENED" : "DRAFT";
   database.exec("BEGIN");
   try {
     database.prepare(`INSERT INTO submissions(dealer_id,campaign_id,status,quality_score,updated_at,submitted_at,source_type,collection_status,questionnaire_version,validation_issues_json)
       VALUES(?,?,?,?,CURRENT_TIMESTAMP,?,?,?,?,?) ON CONFLICT(dealer_id,campaign_id) DO UPDATE SET status=excluded.status,quality_score=excluded.quality_score,updated_at=CURRENT_TIMESTAMP,submitted_at=excluded.submitted_at,source_type=excluded.source_type,collection_status=excluded.collection_status,questionnaire_version=excluded.questionnaire_version,validation_issues_json=excluded.validation_issues_json,external_submission_id=NULL`)
       .run(link.dealer_id,link.campaign_id,finalSubmit?(warnings.length?"verify":"submitted"):"draft",finalSubmit?100:Math.round(normalized.length/questionnaireFields.length*100),submittedAt,"PROPRIETARY",collectionStatus,QUESTIONNAIRE_VERSION,JSON.stringify(warnings));
     const submission = database.prepare("SELECT id FROM submissions WHERE dealer_id=? AND campaign_id=?").get(link.dealer_id,link.campaign_id);
-    database.prepare("DELETE FROM kpi_values WHERE submission_id=? AND kpi_id IN (SELECT id FROM kpi_definitions WHERE active=1)").run(submission.id);
-    const insert = database.prepare("INSERT INTO kpi_values(submission_id,kpi_id,value,note,source_type) VALUES(?,?,?,?,?)");
-    normalized.forEach((item) => insert.run(submission.id,database.prepare("SELECT id FROM kpi_definitions WHERE code=? AND active=1").get(item.code).id,item.value,"","PROPRIETARY"));
-    Object.entries(derived).forEach(([code,value]) => insert.run(submission.id,database.prepare("SELECT id FROM kpi_definitions WHERE code=? AND active=1").get(code).id,value,"","PROPRIETARY_DERIVED"));
-    database.prepare("INSERT INTO audit_events(dealer_id,campaign_id,event_type,actor,payload) VALUES(?,?,?,?,?)").run(link.dealer_id,link.campaign_id,finalSubmit?"proprietary_submission_received":"proprietary_draft_saved",link.dealer_id,JSON.stringify({ fields:normalized.length,derived:Object.keys(derived).length,warnings,linkId:link.id,questionnaireVersion:QUESTIONNAIRE_VERSION }));
+    const derived = replaceQuestionnaireValues(database,submission.id,validatedValues,"PROPRIETARY");
+    database.prepare("INSERT INTO audit_events(dealer_id,campaign_id,event_type,actor,payload) VALUES(?,?,?,?,?)").run(link.dealer_id,link.campaign_id,finalSubmit?(existingStatus === "REOPENED"?"proprietary_submission_resubmitted":"proprietary_submission_received"):"proprietary_draft_saved",link.dealer_id,JSON.stringify({ fields:normalized.length,derived:Object.keys(derived).length,warnings,changes,previousStatus:existingStatus,newStatus:collectionStatus,linkId:link.id,questionnaireVersion:QUESTIONNAIRE_VERSION }));
     database.exec("COMMIT");
   } catch (error) { database.exec("ROLLBACK"); throw error; }
   return collectionPayload(database,token);
+}
+
+function updateSubmittedQuestionnaire(database, dealerId, campaignId, inputValues) {
+  const campaign = selectedCampaign(database,campaignId);
+  if (!campaign) throw Object.assign(new Error("Campagna non trovata"),{ status:404 });
+  const submission = database.prepare("SELECT * FROM submissions WHERE dealer_id=? AND campaign_id=?").get(dealerId,campaign.id);
+  if (!submission || !["SUBMITTED","NEEDS_REVIEW","VALIDATED"].includes(publicCollectionStatus(submission))) {
+    throw Object.assign(new Error("La compilazione deve essere inviata prima di poter essere modificata da JET"),{ status:409 });
+  }
+  const { values:validatedValues,errors } = validateQuestionnaire(inputValues,{ finalSubmit:true });
+  if (Object.keys(errors).length) throw Object.assign(new Error("Alcuni dati non sono validi"),{ status:422,details:errors });
+  const previousValues = storedQuestionnaireValues(database,submission.id);
+  const changes = questionnaireValueChanges(previousValues,validatedValues);
+  if (!changes.length) return { ok:true,status:publicCollectionStatus(submission),changes:[] };
+  const warnings = questionnaireWarnings(validatedValues);
+  database.exec("BEGIN");
+  try {
+    const derived = replaceQuestionnaireValues(database,submission.id,validatedValues,"JET_EDIT");
+    database.prepare(`UPDATE submissions SET status='verify',collection_status='NEEDS_REVIEW',quality_score=100,updated_at=CURRENT_TIMESTAMP,
+      validation_issues_json=?,reviewed_at=CURRENT_TIMESTAMP,reviewed_by='JET Admin' WHERE id=?`).run(JSON.stringify(warnings),submission.id);
+    database.prepare("INSERT INTO audit_events(dealer_id,campaign_id,event_type,actor,payload) VALUES(?,?,?,?,?)").run(dealerId,campaign.id,"submission_values_updated","JET Admin",JSON.stringify({ changes,previousStatus:publicCollectionStatus(submission),newStatus:"NEEDS_REVIEW",derived:Object.keys(derived),warnings,questionnaireVersion:QUESTIONNAIRE_VERSION }));
+    database.exec("COMMIT");
+    return { ok:true,status:"NEEDS_REVIEW",changes };
+  } catch (error) { database.exec("ROLLBACK"); throw error; }
 }
 
 function csvEscape(value) {
@@ -701,12 +753,20 @@ export async function handleApi(request, response, url, database = db) {
     const dealerId=decodeURIComponent(stateMatch[1]); const body=await parseBody(request); const campaign=selectedCampaign(database,body.campaignId || url.searchParams.get("campaignId"));
     const allowed=["NEEDS_REVIEW","VALIDATED","REOPENED"];
     if (!allowed.includes(body.status)) throw Object.assign(new Error("Stato non valido"),{ status:422 });
-    const submission=database.prepare("SELECT id FROM submissions WHERE dealer_id=? AND campaign_id=?").get(dealerId,campaign?.id);
+    const submission=database.prepare("SELECT id,collection_status,status FROM submissions WHERE dealer_id=? AND campaign_id=?").get(dealerId,campaign?.id);
     if (!submission) throw Object.assign(new Error("Compilazione non trovata"),{ status:404 });
     const legacy=body.status === "NEEDS_REVIEW" ? "verify" : body.status === "REOPENED" ? "draft" : "submitted";
     database.prepare("UPDATE submissions SET collection_status=?,status=?,updated_at=CURRENT_TIMESTAMP,reviewed_at=CURRENT_TIMESTAMP,reviewed_by='JET Admin' WHERE id=?").run(body.status,legacy,submission.id);
-    database.prepare("INSERT INTO audit_events(dealer_id,campaign_id,event_type,actor,payload) VALUES(?,?,?,?,?)").run(dealerId,campaign.id,body.status === "REOPENED" ? "submission_reopened" : "submission_status_changed","JET Admin",JSON.stringify({ status:body.status }));
+    const auditPayload={ previousStatus:publicCollectionStatus(submission),newStatus:body.status };
+    if (body.status === "REOPENED") auditPayload.originalValues=storedQuestionnaireValues(database,submission.id);
+    database.prepare("INSERT INTO audit_events(dealer_id,campaign_id,event_type,actor,payload) VALUES(?,?,?,?,?)").run(dealerId,campaign.id,body.status === "REOPENED" ? "submission_reopened" : "submission_status_changed","JET Admin",JSON.stringify(auditPayload));
     return json(response,200,{ ok:true,status:body.status });
+  }
+  const valuesMatch = path.match(/^\/api\/dealers\/([^/]+)\/submission\/values$/);
+  if (request.method === "PUT" && valuesMatch) {
+    requireJet(request);
+    const body = await parseBody(request);
+    return json(response,200,updateSubmittedQuestionnaire(database,decodeURIComponent(valuesMatch[1]),body.campaignId || url.searchParams.get("campaignId"),body.values));
   }
   const surveyMatch = path.match(/^\/api\/survey\/([^/]+)(?:\/(draft|submit))?$/);
   if (surveyMatch && request.method === "GET" && !surveyMatch[2]) return json(response,200,surveyPayload(database,surveyMatch[1]));
