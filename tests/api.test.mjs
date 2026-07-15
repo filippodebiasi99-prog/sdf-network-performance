@@ -29,6 +29,20 @@ test("health and overview are calculated from SQLite", async () => {
   assert.ok(overview.timeline.length > 0);
 });
 
+test("frontend assets are served with the correct content types", async () => {
+  const assets = [
+    ["/styles.css?v=6","text/css"],
+    ["/app.js?v=2","text/javascript"],
+    ["/portal.js?v=2","text/javascript"]
+  ];
+  for (const [asset,contentType] of assets) {
+    const response = await fetch(`${baseUrl}${asset}`);
+    assert.equal(response.status,200);
+    assert.match(response.headers.get("content-type"),new RegExp(contentType));
+    assert.ok((await response.text()).length > 1000);
+  }
+});
+
 test("dealer filters and details return stored values", async () => {
   const result = await fetch(`${baseUrl}/api/dealers?region=Veneto&status=missing`).then((response) => response.json());
   assert.equal(result.dealers.length, 2);
