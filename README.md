@@ -17,9 +17,22 @@ npm install
 npm start
 npm test
 npm run build
+npm run seed:demo
 ```
 
-Aprire `http://127.0.0.1:4173`. Il database demo viene creato/migrato in `data/sdf-kpi.sqlite`. `npm run reset` ricrea esclusivamente il database demo.
+Aprire `http://127.0.0.1:4173`. Il database demo viene creato/migrato in `data/sdf-kpi.sqlite`.
+
+### Ripristino della demo cliente
+
+`npm run seed:demo` cancella esclusivamente i dati marcati come dimostrativi e ricrea in modo idempotente lo stesso scenario:
+
+- 64 concessionari fittizi, distribuiti tra 8 regioni, 4 aree e 5 area manager fittizi;
+- campagna attiva “Rilevazione 1 — 2026” con 32 validati, 12 inviati, 4 da verificare, 6 bozze e 10 non iniziati;
+- 48 compilazioni ricevute, 16 non inviate e 75% di completamento;
+- campagna storica chiusa “Rilevazione 2 — 2025” con dati per 15 concessionari;
+- KPI, formule derivate, note, audit, link e QR della demo.
+
+Il comando non modifica schema o configurazioni e si interrompe se rileva concessionari non marcati come demo. È destinato esclusivamente all’ambiente dimostrativo. Il vecchio `npm run reset` ricrea invece il file SQLite da zero e non va usato su dati da conservare.
 
 Configurazione minima:
 
@@ -71,6 +84,7 @@ Decisioni: [ADR-001](docs/decisions/ADR-001-local-mvp-stack.md), [ADR-002](docs/
 - Reminder preparati e auditati, ma nessuna email viene realmente spedita.
 - Il selettore ruoli non è autenticazione; mancano login, SSO e autorizzazioni production-grade.
 - SQLite sul piano Free di Render può essere effimero; mancano database gestito, backup, privacy e hosting definitivo.
+- Su Render Free il reset e le modifiche al dataset non costituiscono persistenza garantita: un nuovo deploy o riavvio può ricreare il database demo.
 - Jotform è opzionale e richiede configurazione separata solo se riattivato.
 
 Il sistema non è pronto per dati aziendali reali.

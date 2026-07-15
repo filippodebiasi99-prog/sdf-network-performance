@@ -9,6 +9,7 @@ import { getJotformConfig } from "./integrations/jotform/config.js";
 import { buildEmbedUrl, fetchSubmission, parseWebhook } from "./integrations/jotform/index.js";
 import { createDealerLinkToken, hashDealerToken, restoreDealerLinkToken, safeSecretEqual } from "./integrations/jotform/link-tokens.js";
 import { persistJotformSubmission, syncSubmissions } from "./integrations/jotform/service.js";
+import { seedDemoDataset } from "./demo/demo-dataset.js";
 import {
   QUESTIONNAIRE_VERSION,
   questionnaireFields,
@@ -178,8 +179,9 @@ export function initializeDatabase(database = db) {
   ensureColumn(database,"kpi_definitions","questionnaire_version","TEXT");
   ensureColumn(database,"kpi_definitions","formula_version","TEXT");
   ensureColumn(database,"kpi_definitions","required_metrics","TEXT");
-  seedDatabase(database);
+  ensureLegacyKpiDefinitions(database);
   ensureKpiDefinitions(database);
+  seedDemoDataset(database);
   migrateLegacyKpis(database);
   ensureDemoQuestionnaireValues(database);
   ensureCampaignLinks(database);
@@ -248,27 +250,6 @@ function ensureDemoQuestionnaireValues(database) {
   });
 }
 
-const seedDealers = [
-  ["IT-0018","AgriVerde S.r.l.","AV","Lombardia","Nord Ovest","Marco Riva",4.82,18.6,74,"submitted"],
-  ["IT-0021","Meccanica Rurale S.p.A.","MR","Veneto","Nord Est","Elena Costa",5.34,17.2,81,"submitted"],
-  ["IT-0034","Terra e Motori S.r.l.","TM","Emilia-Romagna","Centro Nord","Paolo Serra",3.91,14.8,66,"verify"],
-  ["IT-0042","Fratelli Bassi Macchine","FB","Piemonte","Nord Ovest","Marco Riva",4.12,16.3,69,"missing"],
-  ["IT-0057","Agroservice Veneto","AV","Veneto","Nord Est","Elena Costa",4.67,19.1,77,"submitted"],
-  ["IT-0063","Emilia Trattori S.r.l.","ET","Emilia-Romagna","Centro Nord","Paolo Serra",5.08,16.9,79,"submitted"],
-  ["IT-0075","NordAgri Commerciale","NA","Lombardia","Nord Ovest","Marco Riva",3.56,13.4,54,"verify"],
-  ["IT-0082","Pianura Macchine Agricole","PM","Piemonte","Nord Ovest","Marco Riva",4.39,17.7,71,"submitted"],
-  ["IT-0091","Adriatica Agrimec","AA","Emilia-Romagna","Centro Nord","Paolo Serra",4.18,15.9,65,"submitted"],
-  ["IT-0104","Verona Campo S.r.l.","VC","Veneto","Nord Est","Elena Costa",3.88,15.2,62,"missing"],
-  ["IT-0112","Lario Agri Systems","LA","Lombardia","Nord Ovest","Marco Riva",5.61,20.2,86,"submitted"],
-  ["IT-0129","Monferrato Tractors","MT","Piemonte","Nord Ovest","Marco Riva",4.45,18.1,73,"submitted"],
-  ["IT-0137","Rovigo Macchine","RM","Veneto","Nord Est","Elena Costa",3.71,14.1,59,"verify"],
-  ["IT-0148","Bologna Agri Pro","BA","Emilia-Romagna","Centro Nord","Paolo Serra",4.92,17.4,76,"submitted"],
-  ["IT-0153","Bergamo Rural Tech","BR","Lombardia","Nord Ovest","Marco Riva",3.62,15.7,57,"missing"],
-  ["IT-0166","Cuneo Terra Service","CT","Piemonte","Nord Ovest","Marco Riva",4.26,16.8,68,"submitted"],
-  ["IT-0174","Padova Agri Network","PA","Veneto","Nord Est","Elena Costa",3.94,15.5,64,"missing"],
-  ["IT-0188","Romagna Campo","RC","Emilia-Romagna","Centro Nord","Paolo Serra",4.01,16.1,63,"submitted"]
-];
-
 const seedKpis = [
   ["kpi-revenue","revenue","Fatturato","Fatturato annuale del concessionario","M€","currency",1,0,100,1],
   ["kpi-margin","margin","Marginalità","Margine operativo sul fatturato","%","percentage",1,0,100,2],
@@ -292,42 +273,9 @@ const seedKpis = [
   ["kpi-warranty-ratio","warranty_hours_ratio","Incidenza garanzia","Ore in garanzia sulle ore lavorate","%","percentage",0,0,100,20]
 ];
 
-function seedDatabase(database) {
-  const campaignCount = database.prepare("SELECT COUNT(*) AS count FROM campaigns").get().count;
-  if (campaignCount) return;
-  database.exec("BEGIN");
-  try {
-    const insertCampaign = database.prepare("INSERT INTO campaigns(id,name,year,survey_no,open_date,close_date,status) VALUES(?,?,?,?,?,?,?)");
-    insertCampaign.run("campaign-2026-1","Rilevazione 1 — 2026",2026,1,"2026-06-01","2026-07-31","open");
-    insertCampaign.run("campaign-2025-2","Rilevazione 2 — 2025",2025,2,"2025-09-01","2025-10-15","closed");
-
-    const insertKpi = database.prepare("INSERT INTO kpi_definitions(id,code,name,description,unit,kind,required,min_value,max_value,sort_order) VALUES(?,?,?,?,?,?,?,?,?,?)");
-    seedKpis.forEach((kpi) => insertKpi.run(...kpi));
-
-    const insertDealer = database.prepare("INSERT INTO dealers(id,name,initials,region,area,manager,email,access_token) VALUES(?,?,?,?,?,?,?,?)");
-    const insertSubmission = database.prepare("INSERT INTO submissions(dealer_id,campaign_id,status,quality_score,updated_at,submitted_at) VALUES(?,?,?,?,?,?)");
-    const insertValue = database.prepare("INSERT INTO kpi_values(submission_id,kpi_id,value) VALUES(?,?,?)");
-    const currentDate = new Date("2026-07-14T12:00:00Z");
-
-    seedDealers.forEach((dealer, index) => {
-      const [id,name,initials,region,area,manager,revenue,margin,machines,status] = dealer;
-      insertDealer.run(id,name,initials,region,area,manager,`${id.toLowerCase()}@dealer.example`,randomBytes(18).toString("hex"));
-      const values = [revenue,margin,machines,18 + (index % 7),300 + index * 9,27 + (index % 8),6.4 + (index % 5) * .7,7.8 + (index % 8) * .15,12 + (index % 6),-2 + index * 1.1,72 + index % 12,.65 + index * .03,.82 + index * .025,3.1 + index * .08,18 + index % 9,12 + index % 16,22 + index % 14,88 + index * 3,8 + index % 6 * .12,9 + index % 8];
-      if (status !== "missing") {
-        const updated = new Date(currentDate.getTime() - index * 86400000).toISOString();
-        const submission = insertSubmission.run(id,"campaign-2026-1",status,status === "verify" ? 72 : 94,updated,updated);
-        seedKpis.forEach((kpi,kpiIndex) => insertValue.run(submission.lastInsertRowid,kpi[0],values[kpiIndex]));
-      }
-      const previous = insertSubmission.run(id,"campaign-2025-2","submitted",91,"2025-10-10T12:00:00Z","2025-10-10T12:00:00Z");
-      seedKpis.forEach((kpi,kpiIndex) => insertValue.run(previous.lastInsertRowid,kpi[0],Number((values[kpiIndex] * (kpiIndex === 6 ? 1.08 : .93)).toFixed(2))));
-    });
-    database.prepare("INSERT INTO notes(dealer_id,author,body,created_at) VALUES(?,?,?,?)").run("IT-0018","Luca Bianchi","Verificata coerenza dei dati di vendita.","2026-07-14T15:20:00Z");
-    database.prepare("INSERT INTO audit_events(dealer_id,campaign_id,event_type,actor,payload) VALUES(?,?,?,?,?)").run("IT-0018","campaign-2026-1","seeded","system","{}");
-    database.exec("COMMIT");
-  } catch (error) {
-    database.exec("ROLLBACK");
-    throw error;
-  }
+function ensureLegacyKpiDefinitions(database) {
+  const insertKpi = database.prepare("INSERT OR IGNORE INTO kpi_definitions(id,code,name,description,unit,kind,required,min_value,max_value,sort_order) VALUES(?,?,?,?,?,?,?,?,?,?)");
+  seedKpis.forEach((kpi) => insertKpi.run(...kpi));
 }
 
 function json(response, status, payload) {
@@ -414,6 +362,7 @@ function dealerRows(database, campaignId, filters = {}) {
   if (filters.status === "missing") clauses.push("s.id IS NULL");
   if (filters.status === "submitted") clauses.push(`${statusSql} = 'submitted'`);
   if (filters.status === "verify") clauses.push(`${statusSql} = 'verify'`);
+  if (["NOT_STARTED","DRAFT","SUBMITTED","NEEDS_REVIEW","VALIDATED","REOPENED"].includes(filters.status)) clauses.push(`COALESCE(s.collection_status,CASE WHEN s.id IS NULL THEN 'NOT_STARTED' WHEN s.status='draft' THEN 'DRAFT' WHEN s.status='verify' THEN 'NEEDS_REVIEW' ELSE 'SUBMITTED' END) = ?`),params.push(filters.status);
   return database.prepare(`
     SELECT d.id,d.name,d.initials,d.region,d.area,d.manager,d.email,
       ${statusSql} AS status, COALESCE(s.quality_score,0) AS quality,
@@ -432,7 +381,7 @@ function overviewPayload(database, campaignId) {
   const count = (status) => rows.filter((row) => row.collection_status === status).length;
   const submitted = count("SUBMITTED"), validated = count("VALIDATED"), verify = count("NEEDS_REVIEW"), drafts = count("DRAFT"), reopened = count("REOPENED"), notStarted = count("NOT_STARTED");
   const received = submitted + validated + verify;
-  const completed = submitted + validated;
+  const completed = received;
   const areas = [...new Set(rows.map((row) => row.area))].map((area) => {
     const scoped = rows.filter((row) => row.area === area);
     return { area, total: scoped.length, completed: scoped.filter((row) => ["SUBMITTED","VALIDATED"].includes(row.collection_status)).length, verify: scoped.filter((row) => row.collection_status === "NEEDS_REVIEW").length, missing: scoped.filter((row) => ["NOT_STARTED","DRAFT","REOPENED"].includes(row.collection_status)).length };
@@ -440,12 +389,13 @@ function overviewPayload(database, campaignId) {
   const daily = database.prepare("SELECT substr(updated_at,1,10) AS day, COUNT(*) AS count FROM submissions WHERE campaign_id=? AND status IN ('submitted','verify') GROUP BY substr(updated_at,1,10) ORDER BY day").all(campaign.id);
   let cumulative = 0;
   const timeline = daily.map((item) => ({ day:item.day, value:(cumulative += item.count) }));
+  const alertOrder={NEEDS_REVIEW:0,DRAFT:1,REOPENED:1,NOT_STARTED:2};
   return {
     campaign,
-    totals: { dealers: rows.length, received, completed, submitted,validated,drafts,reopened,notStarted,missing: rows.length - received, verify, completion: rows.length ? Math.round((submitted+validated) / rows.length * 100) : 0 },
+    totals: { dealers: rows.length, received, completed, submitted,validated,drafts,reopened,notStarted,missing: rows.length - received, verify, completion: rows.length ? Math.round(received / rows.length * 100) : 0 },
     areas, timeline,
-    recent: rows.filter((row) => row.updated_at).sort((a,b) => String(b.updated_at).localeCompare(String(a.updated_at))).slice(0,4),
-    alerts: rows.filter((row) => row.status !== "submitted").slice(0,5),
+    recent: rows.filter((row) => ["SUBMITTED","VALIDATED","NEEDS_REVIEW"].includes(row.collection_status)).sort((a,b) => String(b.updated_at).localeCompare(String(a.updated_at))).slice(0,4),
+    alerts: rows.filter((row) => ["NEEDS_REVIEW","DRAFT","REOPENED","NOT_STARTED"].includes(row.collection_status)).sort((a,b) => alertOrder[a.collection_status]-alertOrder[b.collection_status]).slice(0,5),
     syncErrors: COLLECTION_MODE === "jotform" ? database.prepare("SELECT COUNT(*) AS count FROM jotform_submissions WHERE campaign_id=? AND sync_status='ERROR'").get(campaign.id).count : 0
   };
 }
@@ -601,12 +551,12 @@ function exportCsv(database, campaignId) {
   const campaign = selectedCampaign(database,campaignId);
   const kpis = database.prepare("SELECT id,name FROM kpi_definitions WHERE active=1 ORDER BY sort_order").all();
   const rows = dealerRows(database,campaign.id);
-  const header = ["Dealer ID","Concessionario","Regione","Area","Area manager","Stato","Qualità dati",...kpis.map((kpi) => kpi.name)];
+  const header = ["Dealer ID","Concessionario","Regione","Area","Area manager","Stato raccolta","Qualità dati",...kpis.map((kpi) => kpi.name)];
   const lines = [header.map(csvEscape).join(",")];
   for (const row of rows) {
     const submission = database.prepare("SELECT id FROM submissions WHERE dealer_id=? AND campaign_id=?").get(row.id,campaign.id);
     const valueMap = submission ? new Map(database.prepare("SELECT kpi_id,value FROM kpi_values WHERE submission_id=?").all(submission.id).map((item) => [item.kpi_id,item.value])) : new Map();
-    lines.push([row.id,row.name,row.region,row.area,row.manager,row.status,row.quality,...kpis.map((kpi) => valueMap.get(kpi.id) ?? "")].map(csvEscape).join(","));
+    lines.push([row.id,row.name,row.region,row.area,row.manager,row.collection_status,row.quality,...kpis.map((kpi) => valueMap.get(kpi.id) ?? "")].map(csvEscape).join(","));
   }
   return lines.join("\n");
 }
@@ -677,7 +627,7 @@ export async function handleApi(request, response, url, database = db) {
     return response.end(`\ufeff${csv}`);
   }
   if (request.method === "GET" && path === "/api/dealers/template.csv") {
-    const template = "dealer_id,name,region,area,manager,email\nIT-0001,Concessionario Demo,Lombardia,Nord Ovest,Marco Riva,referente@example.com\n";
+    const template = "dealer_id,name,region,area,manager,email\nDEMO-100,Concessionario Esempio Demo,Lombardia,Nord Ovest,Giulia Ferri Demo,demo-100@demo.sdf.invalid\n";
     response.writeHead(200,{ "content-type":"text/csv; charset=utf-8", "content-disposition":"attachment; filename=template-concessionari.csv" });
     return response.end(`\ufeff${template}`);
   }

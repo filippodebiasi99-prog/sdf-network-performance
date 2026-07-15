@@ -1,7 +1,9 @@
 import test, { after, before } from "node:test";
 import assert from "node:assert/strict";
 import { DatabaseSync } from "node:sqlite";
-import { createAppServer, initializeDatabase } from "../server.mjs";
+
+process.env.SDF_DB_PATH=`/tmp/sdf-api-test-${process.pid}.sqlite`;
+const { createAppServer,initializeDatabase }=await import(`../server.mjs?api=${Date.now()}`);
 
 const database = new DatabaseSync(":memory:");
 initializeDatabase(database);
@@ -25,7 +27,7 @@ test("health and overview are calculated from SQLite", async () => {
   const health = await fetch(`${baseUrl}/api/health`).then((response) => response.json());
   assert.equal(health.status, "ok");
   const overview = await fetch(`${baseUrl}/api/overview`).then((response) => response.json());
-  assert.deepEqual(overview.totals, { dealers:18,received:14,completed:11,submitted:11,validated:0,drafts:0,reopened:0,notStarted:4,missing:4,verify:3,completion:61 });
+  assert.deepEqual(overview.totals, { dealers:64,received:48,completed:48,submitted:12,validated:32,drafts:6,reopened:0,notStarted:10,missing:16,verify:4,completion:75 });
   assert.ok(overview.timeline.length > 0);
 });
 
@@ -44,11 +46,11 @@ test("frontend assets are served with the correct content types", async () => {
 });
 
 test("dealer filters and details return stored values", async () => {
-  const result = await fetch(`${baseUrl}/api/dealers?region=Veneto&status=missing`).then((response) => response.json());
-  assert.equal(result.dealers.length, 2);
-  assert.ok(result.dealers.every((dealer) => dealer.region === "Veneto" && dealer.status === "missing"));
-  const detail = await fetch(`${baseUrl}/api/dealers/IT-0018`).then((response) => response.json());
-  assert.equal(detail.dealer.name, "AgriVerde S.r.l.");
+  const result = await fetch(`${baseUrl}/api/dealers?region=Veneto&status=NOT_STARTED`).then((response) => response.json());
+  assert.equal(result.dealers.length, 1);
+  assert.ok(result.dealers.every((dealer) => dealer.region === "Veneto" && dealer.collection_status === "NOT_STARTED"));
+  const detail = await fetch(`${baseUrl}/api/dealers/DEMO-001`).then((response) => response.json());
+  assert.equal(detail.dealer.name, "AgriNord Demo");
   assert.equal(detail.dealer.access_token, undefined);
   assert.equal(detail.values.length, 28);
   assert.match(detail.surveyUrl,/\/compila\//);
@@ -56,7 +58,7 @@ test("dealer filters and details return stored values", async () => {
 });
 
 test("dealer can save a draft and submit all KPI values", async () => {
-  const token = database.prepare("SELECT access_token FROM dealers WHERE id='IT-0042'").get().access_token;
+  const token = database.prepare("SELECT access_token FROM dealers WHERE id='DEMO-004'").get().access_token;
   const survey = await fetch(`${baseUrl}/api/survey/${token}`).then((response) => response.json());
   const draftValues = { [survey.kpis[0].id]: 4.4, [survey.kpis[1].id]: 17.2 };
   const draftResponse = await fetch(`${baseUrl}/api/survey/${token}/draft`, { method:"PUT", headers:{"content-type":"application/json"}, body:JSON.stringify({values:draftValues}) });
@@ -68,12 +70,12 @@ test("dealer can save a draft and submit all KPI values", async () => {
   assert.equal(submitResponse.status, 200);
   assert.equal((await submitResponse.json()).submission.status, "submitted");
   const overview = await fetch(`${baseUrl}/api/overview`).then((response) => response.json());
-  assert.equal(overview.totals.received, 15);
-  assert.equal(overview.totals.missing, 3);
+  assert.equal(overview.totals.received, 49);
+  assert.equal(overview.totals.missing, 15);
 });
 
 test("final submission rejects missing required KPI values", async () => {
-  const token = database.prepare("SELECT access_token FROM dealers WHERE id='IT-0104'").get().access_token;
+  const token = database.prepare("SELECT access_token FROM dealers WHERE id='DEMO-056'").get().access_token;
   const response = await fetch(`${baseUrl}/api/survey/${token}/submit`, { method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify({values:{}}) });
   assert.equal(response.status, 422);
   const payload = await response.json();
@@ -85,7 +87,8 @@ test("CSV export contains dealer and KPI columns", async () => {
   assert.match(response.headers.get("content-type"), /text\/csv/);
   const csv = await response.text();
   assert.match(csv, /Dealer ID,Concessionario/);
-  assert.match(csv, /AgriVerde S\.r\.l\./);
+  assert.match(csv, /AgriNord Demo/);
+  assert.match(csv, /Stato raccolta/);
   assert.match(csv, /Fatturato/);
 });
 
@@ -93,12 +96,12 @@ test("JET can import or update the dealer registry", async () => {
   const response = await fetch(`${baseUrl}/api/dealers/import`, {
     method:"POST",
     headers:{"content-type":"application/json"},
-    body:JSON.stringify({ dealers:[{ dealer_id:"IT-0999",name:"Dealer Importato S.r.l.",region:"Lombardia",area:"Nord Ovest",manager:"Marco Riva",email:"import@example.com" }] })
+    body:JSON.stringify({ dealers:[{ dealer_id:"DEMO-999",name:"Dealer Importato Demo",region:"Lombardia",area:"Nord Ovest",manager:"Giulia Ferri Demo",email:"demo-999@demo.sdf.invalid" }] })
   });
   assert.equal(response.status, 200);
   assert.equal((await response.json()).count, 1);
-  const result = await fetch(`${baseUrl}/api/dealers?search=IT-0999`).then((item) => item.json());
-  assert.equal(result.dealers[0].name, "Dealer Importato S.r.l.");
+  const result = await fetch(`${baseUrl}/api/dealers?search=DEMO-999`).then((item) => item.json());
+  assert.equal(result.dealers[0].name, "Dealer Importato Demo");
   assert.equal(result.dealers[0].status, "missing");
 });
 
@@ -110,7 +113,7 @@ test("JET can prepare reminders for missing or draft submissions", async () => {
   });
   assert.equal(response.status, 200);
   const payload = await response.json();
-  assert.equal(payload.count, 4);
+  assert.equal(payload.count, 16);
   const dealers = await fetch(`${baseUrl}/api/dealers`).then((item) => item.json());
   const statusById = new Map(dealers.dealers.map((dealer) => [dealer.id,dealer.status]));
   assert.ok(payload.recipients.every((dealer) => ["missing","draft"].includes(statusById.get(dealer.id))));

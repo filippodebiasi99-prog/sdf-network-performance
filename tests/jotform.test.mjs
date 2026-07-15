@@ -60,23 +60,23 @@ test("dealer token is long, random and stored as a hash",() => {
 });
 
 test("valid, unknown, revoked and expired dealer links are handled",async () => {
-  const valid=tokenFor("IT-0042");
-  const ok=await nativeFetch(`${baseUrl}/api/compila/${encodeURIComponent(valid.token)}`); assert.equal(ok.status,200); assert.equal((await ok.json()).dealer.id,"IT-0042");
+  const valid=tokenFor("DEMO-004");
+  const ok=await nativeFetch(`${baseUrl}/api/compila/${encodeURIComponent(valid.token)}`); assert.equal(ok.status,200); assert.equal((await ok.json()).dealer.id,"DEMO-004");
   assert.equal((await nativeFetch(`${baseUrl}/api/compila/not-a-token`)).status,404);
-  const revoked=tokenFor("IT-0104"); database.prepare("UPDATE dealer_campaign_links SET status='REVOKED' WHERE id=?").run(revoked.row.id);
+  const revoked=tokenFor("DEMO-056"); database.prepare("UPDATE dealer_campaign_links SET status='REVOKED' WHERE id=?").run(revoked.row.id);
   assert.equal((await nativeFetch(`${baseUrl}/api/compila/${encodeURIComponent(revoked.token)}`)).status,404);
-  const expired=tokenFor("IT-0174"); database.prepare("UPDATE dealer_campaign_links SET expires_at='2020-01-01T00:00:00Z' WHERE id=?").run(expired.row.id);
+  const expired=tokenFor("DEMO-057"); database.prepare("UPDATE dealer_campaign_links SET expires_at='2020-01-01T00:00:00Z' WHERE id=?").run(expired.row.id);
   assert.equal((await nativeFetch(`${baseUrl}/api/compila/${encodeURIComponent(expired.token)}`)).status,410);
 });
 
 test("Jotform embed URL uses the central hidden-field mapping",() => {
-  const config=getJotformConfig(); const url=new URL(buildEmbedUrl({ dealerId:"IT-0042",dealerName:"Fratelli Bassi",campaignId:"campaign-2026-1",campaignName:"Rilevazione",dealerToken:"opaque",periodStart:"2026-06-01",periodEnd:"2026-07-31" },config));
-  assert.equal(url.hostname,"form.jotform.com"); assert.equal(url.pathname,"/FORM-123"); assert.equal(url.searchParams.get("dealerId"),"IT-0042"); assert.equal(url.searchParams.get("dealerToken"),"opaque");
+  const config=getJotformConfig(); const url=new URL(buildEmbedUrl({ dealerId:"DEMO-004",dealerName:"Meccanica Verde Demo",campaignId:"campaign-2026-1",campaignName:"Rilevazione",dealerToken:"opaque",periodStart:"2026-01-01",periodEnd:"2026-12-31" },config));
+  assert.equal(url.hostname,"form.jotform.com"); assert.equal(url.pathname,"/FORM-123"); assert.equal(url.searchParams.get("dealerId"),"DEMO-004"); assert.equal(url.searchParams.get("dealerToken"),"opaque");
 });
 
 test("KPI mapping accepts Italian decimal text",() => {
-  const definitions=database.prepare("SELECT * FROM kpi_definitions").all(); const {token}=tokenFor("IT-0042");
-  const mapped=mapSubmissionToKpis(submissionFixture("MAP-1","IT-0042",token),definitions,getJotformConfig());
+  const definitions=database.prepare("SELECT * FROM kpi_definitions").all(); const {token}=tokenFor("DEMO-004");
+  const mapped=mapSubmissionToKpis(submissionFixture("MAP-1","DEMO-004",token),definitions,getJotformConfig());
   assert.equal(mapped.values.find((item)=>item.code==="revenue").value,5.25); assert.equal(mapped.issues.length,0);
 });
 
@@ -86,33 +86,33 @@ test("webhook rejects a wrong secret",async () => {
 });
 
 test("valid webhook is idempotent and updates Overview",async () => {
-  const {token}=tokenFor("IT-0042"); mockedSubmissions.set("S-1",submissionFixture("S-1","IT-0042",token));
+  const {token}=tokenFor("DEMO-004"); mockedSubmissions.set("S-1",submissionFixture("S-1","DEMO-004",token));
   const send=()=>nativeFetch(`${baseUrl}/api/integrations/jotform/webhook/test-webhook-secret`,{method:"POST",headers:{"content-type":"application/x-www-form-urlencoded"},body:new URLSearchParams({formID:"FORM-123",submissionID:"S-1",rawRequest:JSON.stringify({})})});
   const first=await send(); assert.equal(first.status,200); assert.equal((await first.json()).duplicate,false);
   const second=await send(); assert.equal(second.status,200); assert.equal((await second.json()).duplicate,true);
   assert.equal(database.prepare("SELECT COUNT(*) AS count FROM jotform_submissions WHERE jotform_submission_id='S-1'").get().count,1);
-  const stored=database.prepare("SELECT source_type,collection_status FROM submissions WHERE dealer_id='IT-0042' AND campaign_id='campaign-2026-1'").get(); assert.equal(stored.source_type,"JOTFORM"); assert.equal(stored.collection_status,"SUBMITTED");
-  const overview=await nativeFetch(`${baseUrl}/api/overview`).then((response)=>response.json()); assert.equal(overview.totals.received,15);
+  const stored=database.prepare("SELECT source_type,collection_status FROM submissions WHERE dealer_id='DEMO-004' AND campaign_id='campaign-2026-1'").get(); assert.equal(stored.source_type,"JOTFORM"); assert.equal(stored.collection_status,"SUBMITTED");
+  const overview=await nativeFetch(`${baseUrl}/api/overview`).then((response)=>response.json()); assert.equal(overview.totals.received,49);
 });
 
 test("webhook rejects dealer and campaign mismatches",async () => {
-  const {token}=tokenFor("IT-0042");
-  mockedSubmissions.set("BAD-DEALER",submissionFixture("BAD-DEALER","IT-0057",token));
-  mockedSubmissions.set("BAD-CAMPAIGN",submissionFixture("BAD-CAMPAIGN","IT-0042",token,"campaign-2025-2"));
+  const {token}=tokenFor("DEMO-004");
+  mockedSubmissions.set("BAD-DEALER",submissionFixture("BAD-DEALER","DEMO-005",token));
+  mockedSubmissions.set("BAD-CAMPAIGN",submissionFixture("BAD-CAMPAIGN","DEMO-004",token,"campaign-2025-2"));
   for (const id of ["BAD-DEALER","BAD-CAMPAIGN"]) {
     const response=await nativeFetch(`${baseUrl}/api/integrations/jotform/webhook/test-webhook-secret`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({formID:"FORM-123",submissionID:id})}); assert.equal(response.status,422);
   }
 });
 
 test("manual synchronization imports missing submissions without duplicates",async () => {
-  const {token}=tokenFor("IT-0153"); listResponse=[submissionFixture("SYNC-1","IT-0153",token)];
+  const {token}=tokenFor("DEMO-058"); listResponse=[submissionFixture("SYNC-1","DEMO-058",token)];
   const first=await nativeFetch(`${baseUrl}/api/integrations/jotform/sync`,{method:"POST",headers:{"content-type":"application/json"},body:"{}"}).then((response)=>response.json());
   assert.equal(first.imported,1); assert.equal(first.errors,0);
   const second=await nativeFetch(`${baseUrl}/api/integrations/jotform/sync`,{method:"POST",headers:{"content-type":"application/json"},body:"{}"}).then((response)=>response.json()); assert.equal(second.existing,1); assert.equal(database.prepare("SELECT COUNT(*) AS count FROM jotform_submissions WHERE jotform_submission_id='SYNC-1'").get().count,1);
 });
 
 test("QR code encodes the portal URL, never the Jotform URL",async () => {
-  const link=await nativeFetch(`${baseUrl}/api/dealers/IT-0042/collection-link?campaignId=campaign-2026-1`).then((response)=>response.json());
+  const link=await nativeFetch(`${baseUrl}/api/dealers/DEMO-004/collection-link?campaignId=campaign-2026-1`).then((response)=>response.json());
   const qr=await nativeFetch(`${baseUrl}${link.qrUrl}`); assert.equal(qr.status,200); assert.match(qr.headers.get("content-type"),/svg/); assert.equal(qr.headers.get("x-qr-target"),link.url); assert.match(link.url,/portal\.example\.test\/compila\//); assert.doesNotMatch(link.url,/jotform/);
 });
 
