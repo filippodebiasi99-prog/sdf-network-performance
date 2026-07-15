@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Preview del portale SDF per il monitoraggio dei KPI della rete concessionari." />
+    <title>SDF Network Performance</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='8' fill='%23142b24'/%3E%3Cpath d='M12 17h43l-4 30H8z' fill='%23e3ef45'/%3E%3C/svg%3E" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&amp;display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css?v=5" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Vai al contenuto</a>
+    <div class="app-shell">
+      <aside class="sidebar" id="sidebar" aria-label="Navigazione principale">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">SDF</span>
+          <span class="brand-copy">Network<br />Performance</span>
+        </div>
+
+        <nav class="primary-nav">
+          <p class="nav-label">Workspace</p>
+          <button class="nav-item is-active" data-page="overview"><span data-icon="overview"></span>Overview</button>
+          <button class="nav-item" data-page="dealers"><span data-icon="dealers"></span>Concessionari</button>
+          <button class="nav-item" data-page="analysis"><span data-icon="analysis"></span>Analisi KPI</button>
+          <button class="nav-item" data-page="surveys"><span data-icon="calendar"></span>Rilevazioni</button>
+          <button class="nav-item" data-page="reports"><span data-icon="reports"></span>Report</button>
+        </nav>
+
+        <div class="sidebar-bottom">
+          <div class="campaign-card">
+            <div class="campaign-label"><span class="live-dot"></span>Campagna attiva</div>
+            <strong>Rilevazione 1 — 2026</strong>
+            <div class="campaign-progress"><span style="width: 75%"></span></div>
+            <small>48 di 64 concessionari</small>
+          </div>
+          <button class="user-card" aria-label="Apri profilo utente">
+            <span class="avatar">LB</span>
+            <span><strong>Luca Bianchi</strong><small>JET · Amministratore</small></span>
+            <span data-icon="chevron"></span>
+          </button>
+        </div>
+      </aside>
+
+      <div class="app-main">
+        <header class="topbar">
+          <button class="icon-button menu-button" id="menu-button" aria-label="Apri menu" aria-expanded="false" aria-controls="sidebar"><span data-icon="menu"></span></button>
+          <div class="topbar-context"><span>Portale KPI rete concessionari</span><strong id="mobile-page-title">Overview</strong></div>
+          <button class="topbar-command" type="button" data-global-action="search">
+            <span data-icon="search"></span>
+            <span>Cerca concessionario, KPI o report</span>
+            <kbd>⌘ K</kbd>
+          </button>
+          <div class="topbar-actions">
+            <button class="icon-button" aria-label="Notifiche"><span data-icon="bell"></span><span class="notification-dot"></span></button>
+            <button class="icon-button" aria-label="Impostazioni"><span data-icon="settings"></span></button>
+            <button class="topbar-user" type="button"><span class="avatar">LB</span><span><strong>Luca Bianchi</strong><small>JET Admin</small></span></button>
+          </div>
+        </header>
+        <main id="main-content" tabindex="-1"></main>
+      </div>
+    </div>
+    <div class="overlay" id="overlay"></div>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="app.js"></script>
+    <script src="portal.js"></script>
+  </body>
+</html>

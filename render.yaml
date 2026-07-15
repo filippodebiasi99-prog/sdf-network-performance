@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: sdf-network-performance
+    runtime: node
+    plan: free
+    buildCommand: ""
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 22.14.0
