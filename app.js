@@ -103,7 +103,7 @@ function overviewPage() {
 
 function submissionChart() {
   return `<svg class="line-chart" viewBox="0 0 700 222" role="img" aria-label="Le compilazioni 2026 crescono da 3 a 48 tra il primo giugno e il 15 luglio, superando il 2025.">
-    <defs><linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5d7cff" stop-opacity=".2"/><stop offset="1" stop-color="#5d7cff" stop-opacity="0"/></linearGradient></defs>
+    <defs><linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eb212e" stop-opacity=".2"/><stop offset="1" stop-color="#eb212e" stop-opacity="0"/></linearGradient></defs>
     <path class="chart-grid-line" d="M40 24H680M40 68H680M40 112H680M40 156H680M40 200H680"/><text class="chart-label" x="10" y="203">0</text><text class="chart-label" x="5" y="159">12</text><text class="chart-label" x="5" y="115">24</text><text class="chart-label" x="5" y="71">36</text><text class="chart-label" x="5" y="27">48</text>
     <path class="chart-area" d="M40 190 C95 185 105 175 150 169 S218 147 258 137 S327 112 365 102 S430 81 472 69 S535 51 580 42 S645 28 680 24 L680 200 L40 200Z"/>
     <path class="chart-line previous" d="M40 190 C110 180 140 164 195 151 S290 126 355 108 S465 91 530 69 S620 50 680 42"/>
