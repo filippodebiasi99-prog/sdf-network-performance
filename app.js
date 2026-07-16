@@ -244,7 +244,7 @@ document.querySelector("#menu-button").addEventListener("click", () => {
 });
 document.querySelector("#overlay").addEventListener("click", closeMenu);
 document.addEventListener("keydown", (event) => { if (event.key === "Escape") closeMenu(); });
-document.querySelectorAll("[data-global-action]").forEach((element) => element.addEventListener("click", () => showToast("Ricerca globale disponibile nella versione completa del portale.")));
+document.querySelectorAll("[data-global-action='search']").forEach((element) => element.addEventListener("click", () => document.dispatchEvent(new CustomEvent("sdf:global-search",{detail:{trigger:element}}))));
 hydrateIcons();
 const initialParams = new URLSearchParams(window.location.search);
 const allowedPages = ["overview", "dealers", "dealer", "analysis", "surveys", "reports"];

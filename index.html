@@ -48,7 +48,7 @@
         <header class="topbar">
           <button class="icon-button menu-button" id="menu-button" aria-label="Apri menu" aria-expanded="false" aria-controls="sidebar"><span data-icon="menu"></span></button>
           <div class="topbar-context"><span>Portale KPI rete concessionari</span><strong id="mobile-page-title">Overview</strong></div>
-          <button class="topbar-command" type="button" data-global-action="search">
+          <button class="topbar-command" type="button" data-global-action="search" aria-haspopup="dialog" aria-controls="global-search-dialog">
             <span data-icon="search"></span>
             <span>Cerca concessionario, KPI o report</span>
             <kbd>⌘ K</kbd>
@@ -68,6 +68,16 @@
     </div>
     <div class="overlay" id="overlay"></div>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <dialog class="global-search-dialog" id="global-search-dialog" aria-labelledby="global-search-title">
+      <div class="global-search-head">
+        <span data-icon="search" aria-hidden="true"></span>
+        <label class="sr-only" for="global-search-input" id="global-search-title">Cerca nel portale</label>
+        <input id="global-search-input" type="search" role="combobox" aria-autocomplete="list" aria-controls="global-search-results" aria-expanded="true" placeholder="Cerca concessionario, KPI o sezione" autocomplete="off" />
+        <button type="button" id="global-search-close" aria-label="Chiudi ricerca">Esc</button>
+      </div>
+      <div class="global-search-results" id="global-search-results" role="listbox" aria-live="polite"></div>
+      <footer class="global-search-footer"><span><kbd>↑</kbd><kbd>↓</kbd> per navigare</span><span><kbd>Invio</kbd> per aprire</span></footer>
+    </dialog>
     <script src="/app.js?v=2"></script>
     <script src="/portal.js?v=4"></script>
   </body>

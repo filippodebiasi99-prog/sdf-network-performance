@@ -1,5 +1,5 @@
 (() => {
-  const state = { config: null, overview: null, detail: null, analysis: null, campaigns: null, collection: null, collectionToken: null, online: false, poller: null, role:localStorage.getItem("sdf-demo-role") === "SDF" ? "SDF" : "JET", autosaveTimer:null };
+  const state = { config: null, overview: null, detail: null, analysis: null, campaigns: null, collection: null, collectionToken: null, online: false, poller: null, role:localStorage.getItem("sdf-demo-role") === "SDF" ? "SDF" : "JET", autosaveTimer:null,searchDealers:null,searchItems:[],searchActiveIndex:0,searchTrigger:null };
   const originalOverviewPage = overviewPage;
 
   statusLabel.draft = "Bozza";
@@ -43,6 +43,7 @@
     state.analysis=null;
     state.detail=null;
     state.campaigns=null;
+    state.searchDealers=null;
   }
 
   function normalizeDealer(row) {
@@ -75,6 +76,85 @@
     }
     if (metric?.kind === "score") return `${number.toLocaleString("it-IT",{maximumFractionDigits:1})} / 10`;
     return number.toLocaleString("it-IT",{maximumFractionDigits:0});
+  }
+
+  const searchPages = [
+    { type:"page",id:"overview",label:"Overview",description:"Performance e stato della rete",page:"overview",icon:"overview",keywords:"dashboard rete performance" },
+    { type:"page",id:"dealers",label:"Concessionari",description:"Anagrafica, link e stato delle compilazioni",page:"dealers",icon:"dealers",keywords:"dealer anagrafica link qr" },
+    { type:"page",id:"analysis",label:"Analisi KPI",description:"Benchmark e confronti della rete",page:"analysis",icon:"analysis",keywords:"media mediana benchmark kpi" },
+    { type:"page",id:"surveys",label:"Rilevazioni",description:"Campagne e periodi di raccolta",page:"surveys",icon:"calendar",keywords:"campagne questionari" },
+    { type:"page",id:"reports",label:"Report",description:"Report ed esportazione CSV",page:"reports",icon:"reports",keywords:"export csv dati" }
+  ];
+
+  function normalizeSearch(value) {
+    return String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+  }
+
+  function globalSearchCorpus() {
+    const dealerItems=(state.searchDealers || []).map((dealer) => ({ type:"dealer",id:dealer.id,label:dealer.name,description:`${dealer.id} · ${dealer.region} · ${dealer.area}`,dealerId:dealer.id,icon:"dealers",keywords:`${dealer.id} ${dealer.name} ${dealer.region} ${dealer.area} ${dealer.manager}` }));
+    const kpiItems=(state.config?.kpis || []).map((kpi) => ({ type:"kpi",id:kpi.id,label:kpi.name,description:`${kpi.code} · ${kpi.section || "KPI rete"}`,kpiId:kpi.id,icon:"analysis",keywords:`${kpi.code} ${kpi.name} ${kpi.description || ""} ${kpi.section || ""}` }));
+    return [...searchPages,...dealerItems,...kpiItems];
+  }
+
+  function renderGlobalSearch(query = "") {
+    const results=document.querySelector("#global-search-results");
+    const input=document.querySelector("#global-search-input");
+    if (!results || !input) return;
+    const term=normalizeSearch(query);
+    const corpus=globalSearchCorpus();
+    const matched=(term ? corpus.filter((item)=>normalizeSearch(`${item.label} ${item.description} ${item.keywords}`).includes(term)) : searchPages).slice(0,12);
+    state.searchItems=matched;
+    state.searchActiveIndex=Math.min(state.searchActiveIndex,Math.max(0,matched.length-1));
+    input.setAttribute("aria-activedescendant",matched.length?`global-search-option-${state.searchActiveIndex}`:"");
+    if (!matched.length) {
+      results.innerHTML=`<div class="global-search-empty"><strong>Nessun risultato</strong><span>Prova con il nome del concessionario, il Dealer ID o un KPI.</span></div>`;
+      return;
+    }
+    const typeLabels={page:"Sezioni",dealer:"Concessionari",kpi:"KPI"};
+    results.innerHTML=["page","dealer","kpi"].map((type) => {
+      const items=matched.filter((item)=>item.type===type);
+      if (!items.length) return "";
+      return `<section class="global-search-group"><h2>${typeLabels[type]}</h2>${items.map((item) => { const index=matched.indexOf(item); return `<button type="button" role="option" id="global-search-option-${index}" aria-selected="${index===state.searchActiveIndex}" data-search-index="${index}"><span class="global-search-icon">${icon(item.icon)}</span><span><strong>${escapeHtml(item.label)}</strong><small>${escapeHtml(item.description)}</small></span><span class="global-search-open">Apri</span></button>`; }).join("")}</section>`;
+    }).join("");
+    results.querySelectorAll("[data-search-index]").forEach((button)=>button.addEventListener("click",()=>activateGlobalSearchResult(Number(button.dataset.searchIndex))));
+  }
+
+  function updateGlobalSearchSelection(nextIndex) {
+    if (!state.searchItems.length) return;
+    state.searchActiveIndex=(nextIndex+state.searchItems.length)%state.searchItems.length;
+    document.querySelector("#global-search-input")?.setAttribute("aria-activedescendant",`global-search-option-${state.searchActiveIndex}`);
+    document.querySelectorAll("[data-search-index]").forEach((button)=>button.setAttribute("aria-selected",String(Number(button.dataset.searchIndex)===state.searchActiveIndex)));
+    document.querySelector(`#global-search-option-${state.searchActiveIndex}`)?.scrollIntoView({block:"nearest"});
+  }
+
+  async function activateGlobalSearchResult(index) {
+    const item=state.searchItems[index];
+    if (!item) return;
+    document.querySelector("#global-search-dialog")?.close();
+    if (item.type === "dealer") return portalRenderPage("dealer",{dealer:{id:item.dealerId}});
+    if (item.type === "kpi") return portalRenderPage("analysis",{kpiId:item.kpiId,campaignId:campaignId()});
+    return portalRenderPage(item.page);
+  }
+
+  async function openGlobalSearch(trigger = document.activeElement) {
+    if (["collection","confirmation","survey"].includes(currentPage)) return;
+    const dialog=document.querySelector("#global-search-dialog");
+    const input=document.querySelector("#global-search-input");
+    const results=document.querySelector("#global-search-results");
+    if (!dialog || !input || !results) return;
+    state.searchTrigger=trigger;
+    state.searchActiveIndex=0;
+    input.value="";
+    results.innerHTML='<div class="global-search-loading">Caricamento…</div>';
+    if (!dialog.open) dialog.showModal();
+    input.focus();
+    try {
+      if (!state.config) state.config=await api("/api/config");
+      if (!state.searchDealers) state.searchDealers=(await api(`/api/dealers?campaignId=${campaignId()}`)).dealers;
+      renderGlobalSearch();
+    } catch (error) {
+      results.innerHTML=`<div class="global-search-empty"><strong>Ricerca non disponibile</strong><span>${escapeHtml(error.message)}</span></div>`;
+    }
   }
 
   function overviewBusinessMetrics(performance) {
@@ -455,6 +535,22 @@
     showToast(state.role === "SDF" ? "Vista SDF attiva: modifiche disabilitate." : "Vista JET attiva.");
     await portalRenderPage(["collection","confirmation","survey"].includes(currentPage)?"overview":currentPage);
   });
+
+  const searchDialog=document.querySelector("#global-search-dialog");
+  const searchInput=document.querySelector("#global-search-input");
+  document.addEventListener("sdf:global-search",(event)=>openGlobalSearch(event.detail?.trigger));
+  document.addEventListener("keydown",(event)=>{
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase()==="k") { event.preventDefault(); openGlobalSearch(); }
+  });
+  searchInput?.addEventListener("input",()=>{state.searchActiveIndex=0;renderGlobalSearch(searchInput.value)});
+  searchInput?.addEventListener("keydown",(event)=>{
+    if (event.key==="ArrowDown") { event.preventDefault();updateGlobalSearchSelection(state.searchActiveIndex+1); }
+    if (event.key==="ArrowUp") { event.preventDefault();updateGlobalSearchSelection(state.searchActiveIndex-1); }
+    if (event.key==="Enter") { event.preventDefault();activateGlobalSearchResult(state.searchActiveIndex); }
+    if (event.key==="Escape") { event.preventDefault();searchDialog?.close(); }
+  });
+  document.querySelector("#global-search-close")?.addEventListener("click",()=>searchDialog?.close());
+  searchDialog?.addEventListener("close",()=>state.searchTrigger?.focus?.());
 
   const params = new URLSearchParams(location.search);
   const requested = params.get("page");
