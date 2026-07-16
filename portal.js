@@ -186,14 +186,21 @@
     return `<div class="business-metrics" aria-label="Performance della rete">${performance.metrics.map((metric) => `<article class="business-metric"><span>${descriptions[metric.code] || escapeHtml(metric.name)}</span><strong>${formatPerformanceValue(metric)}</strong><small>${metric.code === "customer_satisfaction" ? `${metric.count} concessionari nel campione` : `Media dealer ${formatPerformanceValue(metric,metric.average)}`}</small></article>`).join("")}</div>`;
   }
 
+  function relativeBarWidth(value,values,floor=20) {
+    const nums=values.map((item)=>Number(item)||0);
+    const min=Math.min(...nums),max=Math.max(...nums),span=max-min;
+    if (!(span>0)) return 100;
+    return Math.round(floor+(Number(value)-min)/span*(100-floor));
+  }
+
   function overviewRevenueLeaders(performance) {
-    const maximum=Math.max(1,...performance.leaders.map((item)=>item.value));
-    return `<ol class="ranking-list">${performance.leaders.map((item) => `<li><span class="ranking-position">${item.position}</span><button class="ranking-dealer" data-dealer-id="${escapeHtml(item.id)}"><strong>${escapeHtml(item.name)}</strong><small>${escapeHtml(item.region)} · ${escapeHtml(item.id)}</small></button><div class="ranking-value"><strong>${formatPerformanceValue({kind:"currency"},item.value)}</strong><small>${item.deltaFromAverage >= 0 ? "+" : ""}${item.deltaFromAverage.toLocaleString("it-IT",{maximumFractionDigits:1})}% vs media</small></div><span class="ranking-bar"><i style="width:${Math.max(8,item.value/maximum*100)}%"></i></span></li>`).join("")}</ol>`;
+    const values=performance.leaders.map((item)=>item.value);
+    return `<ol class="ranking-list">${performance.leaders.map((item) => `<li><span class="ranking-position">${item.position}</span><button class="ranking-dealer" data-dealer-id="${escapeHtml(item.id)}"><strong>${escapeHtml(item.name)}</strong><small>${escapeHtml(item.region)} · ${escapeHtml(item.id)}</small></button><div class="ranking-value"><strong>${formatPerformanceValue({kind:"currency"},item.value)}</strong><small>${item.deltaFromAverage >= 0 ? "+" : ""}${item.deltaFromAverage.toLocaleString("it-IT",{maximumFractionDigits:1})}% vs media</small></div><span class="ranking-bar"><i style="width:${relativeBarWidth(item.value,values,22)}%"></i></span></li>`).join("")}</ol>`;
   }
 
   function overviewAreaPerformance(performance) {
-    const maximum=Math.max(1,...performance.areas.map((item)=>item.average));
-    return `<div class="area-performance">${performance.areas.map((item,index) => `<div class="area-performance-row"><div><strong>${escapeHtml(item.area)}</strong><small>${item.count} dealer</small></div><span class="area-performance-track"><i style="width:${Math.max(8,item.average/maximum*100)}%"></i></span><strong>${formatPerformanceValue({kind:"currency"},item.average)}</strong><em>${index+1}</em></div>`).join("")}</div>`;
+    const values=performance.areas.map((item)=>item.average);
+    return `<div class="area-performance">${performance.areas.map((item,index) => `<div class="area-performance-row"><div><strong>${escapeHtml(item.area)}</strong><small>${item.count} dealer</small></div><span class="area-performance-track"><i style="width:${relativeBarWidth(item.average,values,20)}%"></i></span><strong>${formatPerformanceValue({kind:"currency"},item.average)}</strong><em>${index+1}</em></div>`).join("")}</div>`;
   }
 
   function portalAreaStatus() {
