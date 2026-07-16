@@ -406,7 +406,7 @@ function overviewPayload(database, campaignId) {
   const count = (status) => rows.filter((row) => row.collection_status === status).length;
   const submitted = count("SUBMITTED"), validated = count("VALIDATED"), verify = count("NEEDS_REVIEW"), drafts = count("DRAFT"), reopened = count("REOPENED"), notStarted = count("NOT_STARTED");
   const received = submitted + validated + verify;
-  const completed = received;
+  const completed = submitted + validated;
   const areas = [...new Set(rows.map((row) => row.area))].map((area) => {
     const scoped = rows.filter((row) => row.area === area);
     return { area, total: scoped.length, completed: scoped.filter((row) => ["SUBMITTED","VALIDATED"].includes(row.collection_status)).length, verify: scoped.filter((row) => row.collection_status === "NEEDS_REVIEW").length, missing: scoped.filter((row) => ["NOT_STARTED","DRAFT","REOPENED"].includes(row.collection_status)).length };
