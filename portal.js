@@ -320,7 +320,7 @@
     if (addNote) addNote.addEventListener("click", async () => {
       const body = prompt("Scrivi una nota interna JET:");
       if (!body) return;
-      await api(`/api/dealers/${state.detail.dealer.id}/notes`,{method:"POST",body:JSON.stringify({body,author:"Luca Bianchi"})});
+      await api(`/api/dealers/${state.detail.dealer.id}/notes`,{method:"POST",body:JSON.stringify({body,author:"Daniele"})});
       showToast("Nota salvata.");
       await portalRenderPage("dealer",{dealer:state.detail.dealer});
     });
