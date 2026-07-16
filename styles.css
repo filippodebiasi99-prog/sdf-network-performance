@@ -396,6 +396,54 @@ tbody tr:last-child td { border-bottom:0; }
 .report-card .button:disabled { opacity:.48; cursor:not-allowed; }
 code { padding:2px 5px; border-radius:5px; background:var(--gray-75); font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.92em; }
 
+/* Help center */
+.help-page { max-width:1260px; }
+.help-search-panel { display:grid; grid-template-columns:minmax(0,760px) 1fr; align-items:center; gap:24px; margin-bottom:24px; padding:22px 24px; border:1px solid var(--line); border-radius:18px; background:var(--white); }
+.help-search-panel > p { margin:0; color:var(--muted); font-size:9px; line-height:1.5; }
+.help-search-field { min-height:48px; display:grid; grid-template-columns:20px minmax(0,1fr) auto; align-items:center; gap:10px; padding:0 14px; border:1px solid var(--line-strong); border-radius:12px; background:var(--gray-50); }
+.help-search-field:focus-within { border-color:rgba(235,33,46,.48); box-shadow:0 0 0 3px rgba(235,33,46,.08); }
+.help-search-field svg { width:18px; color:var(--muted); }
+.help-search-field input { width:100%; height:46px; border:0; outline:0; color:var(--ink); background:transparent; font:inherit; font-size:11px; }
+.help-search-field kbd { color:var(--muted); font-size:8px; }
+.help-layout { display:grid; grid-template-columns:240px minmax(0,1fr); align-items:start; gap:24px; }
+.help-sidebar { position:sticky; top:104px; padding:20px; border-radius:16px; }
+.help-sidebar .eyebrow { margin-bottom:10px; }
+.help-sidebar nav { display:grid; gap:2px; }
+.help-sidebar nav button { min-height:39px; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:0 10px; border:0; border-radius:8px; color:var(--ink-soft); background:transparent; font:inherit; font-size:9px; text-align:left; cursor:pointer; }
+.help-sidebar nav button:hover,.help-sidebar nav button.is-active { color:var(--ink); background:var(--gray-75); }
+.help-sidebar nav button.is-active { box-shadow:inset 2px 0 var(--accent); }
+.help-sidebar nav small { color:var(--muted); font-size:8px; }
+.help-role-note { margin-top:18px; padding-top:17px; border-top:1px solid var(--line); }
+.help-role-note strong { font-size:9px; }
+.help-role-note p { margin:6px 0 0; color:var(--muted); font-size:8px; line-height:1.55; }
+.help-content { min-width:0; }
+.help-content-heading { min-height:52px; display:flex; align-items:flex-start; justify-content:space-between; gap:20px; padding:2px 2px 14px; border-bottom:1px solid var(--line); }
+.help-content-heading .eyebrow { margin-bottom:6px; }
+.help-content-heading h2 { margin:0; font-size:18px; }
+.help-content-heading > span { color:var(--muted); font-size:9px; }
+.help-guide { border-bottom:1px solid var(--line); }
+.help-guide[hidden] { display:none; }
+.help-guide summary { min-height:104px; display:grid; grid-template-columns:34px minmax(0,1fr) 28px; align-items:center; gap:15px; padding:18px 2px; list-style:none; cursor:pointer; }
+.help-guide summary::-webkit-details-marker { display:none; }
+.help-guide summary > span:nth-child(2) { display:grid; gap:5px; }
+.help-guide summary small { color:var(--accent-text); font-size:8px; font-weight:650; letter-spacing:.06em; text-transform:uppercase; }
+.help-guide summary strong { font-size:14px; font-weight:600; letter-spacing:-.02em; }
+.help-guide summary em { color:var(--muted); font-size:9px; font-style:normal; line-height:1.5; }
+.help-guide-index { color:var(--muted); font-size:9px; font-variant-numeric:tabular-nums; }
+.help-guide-toggle { width:26px; height:26px; display:grid; place-items:center; border:1px solid var(--line); border-radius:50%; color:var(--muted); font-size:15px; transition:transform .18s ease; }
+.help-guide[open] .help-guide-toggle { transform:rotate(45deg); color:var(--accent-text); }
+.help-guide-body { padding:0 44px 24px 51px; }
+.help-guide-body ol { display:grid; gap:10px; margin:0 0 18px; padding:0; counter-reset:help-step; list-style:none; }
+.help-guide-body li { position:relative; min-height:24px; padding-left:34px; color:var(--ink-soft); font-size:10px; line-height:1.55; counter-increment:help-step; }
+.help-guide-body li::before { content:counter(help-step); position:absolute; top:0; left:0; width:22px; height:22px; display:grid; place-items:center; border:1px solid var(--line-strong); border-radius:50%; color:var(--ink); font-size:8px; font-weight:650; }
+.help-guide-body .button { margin-left:34px; }
+.help-guide-body .button svg { margin-left:3px; }
+.help-empty { padding:70px 20px; text-align:center; }
+.help-empty > span { width:40px; height:40px; display:grid; place-items:center; margin:0 auto 16px; border:1px solid var(--line); border-radius:50%; }
+.help-empty svg { width:18px; }
+.help-empty h2 { margin-bottom:8px; }
+.help-empty p { color:var(--muted); font-size:9px; }
+
 /* Dealer collection and Jotform integration */
 .button.compact { min-height:32px; padding-inline:10px; font-size:9px; }
 .button.danger { color:var(--danger); border-color:rgba(190,54,54,.25); }
@@ -603,6 +651,11 @@ code { padding:2px 5px; border-radius:5px; background:var(--gray-75); font-famil
   .technical-list { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .questionnaire-shell { grid-template-columns:260px minmax(0,1fr); gap:36px; }
   .survey-field { grid-template-columns:minmax(0,1fr) 240px; gap:20px; }
+  .help-search-panel { grid-template-columns:1fr; gap:10px; }
+  .help-layout { grid-template-columns:1fr; }
+  .help-sidebar { position:static; }
+  .help-sidebar nav { grid-template-columns:repeat(3,minmax(0,1fr)); }
+  .help-role-note { display:none; }
 }
 
 @media (max-width:640px) {
@@ -610,6 +663,18 @@ code { padding:2px 5px; border-radius:5px; background:var(--gray-75); font-famil
   .operational-dialog-body,.operational-form-grid { padding-inline:18px; }
   .dealer-selector { margin-inline:18px; }
   .campaign-actions { justify-content:flex-start; max-width:none; }
+  .help-search-panel { padding:14px; border-radius:14px; }
+  .help-search-panel > p,.help-search-field kbd { display:none; }
+  .help-search-field { grid-template-columns:18px minmax(0,1fr); }
+  .help-sidebar { padding:10px; overflow-x:auto; }
+  .help-sidebar > .eyebrow { display:none; }
+  .help-sidebar nav { width:max-content; display:flex; }
+  .help-sidebar nav button { min-width:max-content; padding-inline:12px; }
+  .help-content-heading { padding-inline:2px; }
+  .help-guide summary { grid-template-columns:25px minmax(0,1fr) 26px; gap:9px; min-height:96px; }
+  .help-guide summary em { font-size:8px; }
+  .help-guide-body { padding:0 0 22px 34px; }
+  .help-guide-body .button { width:calc(100% - 34px); margin-left:34px; }
   .topbar-actions { gap:6px; }
   .demo-role-control { padding:5px; font-size:0; }
   .demo-role-control select { max-width:96px; font-size:8px; }

@@ -8,6 +8,8 @@ JET → crea o importa i dealer → crea una rilevazione → condivide link o QR
 
 Il dealer non ha un account: il link opaco `/compila/:token` identifica dealer e campagna. Il questionario proprietario è il flusso predefinito; Jotform resta un'integrazione opzionale disattivata.
 
+Il Centro assistenza è disponibile dalla navigazione, dalla topbar e dalla ricerca globale. Contiene guide ricercabili per le sole operazioni effettivamente disponibili a JET, SDF e concessionari.
+
 ## Avvio e test
 
 Richiede Node.js 22.5 o successivo.

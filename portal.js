@@ -83,7 +83,29 @@
     { type:"page",id:"dealers",label:"Concessionari",description:"Anagrafica, link e stato delle compilazioni",page:"dealers",icon:"dealers",keywords:"dealer anagrafica link qr" },
     { type:"page",id:"analysis",label:"Analisi KPI",description:"Benchmark e confronti della rete",page:"analysis",icon:"analysis",keywords:"media mediana benchmark kpi" },
     { type:"page",id:"surveys",label:"Rilevazioni",description:"Campagne e periodi di raccolta",page:"surveys",icon:"calendar",keywords:"campagne questionari" },
-    { type:"page",id:"reports",label:"Report",description:"Report ed esportazione CSV",page:"reports",icon:"reports",keywords:"export csv dati" }
+    { type:"page",id:"reports",label:"Report",description:"Report ed esportazione CSV",page:"reports",icon:"reports",keywords:"export csv dati" },
+    { type:"page",id:"help",label:"Centro assistenza",description:"Guide operative per JET, SDF e concessionari",page:"help",icon:"help",keywords:"aiuto guide procedure supporto" }
+  ];
+
+  const helpCategories=[
+    {id:"all",label:"Tutte le guide"},{id:"dealers",label:"Concessionari"},{id:"campaigns",label:"Rilevazioni"},
+    {id:"collection",label:"Raccolta dati"},{id:"analysis",label:"Analisi e report"},{id:"roles",label:"Viste e accessi"}
+  ];
+
+  const helpGuides=[
+    {id:"overview",category:"analysis",audience:"JET · SDF",title:"Leggere l’Overview",summary:"Controlla performance della rete e avanzamento della rilevazione selezionata.",steps:["Seleziona la rilevazione dal menu nella testata.","Consulta fatturato, unità vendute, ricambi, assistenza e soddisfazione calcolati sui dati ricevuti.","Usa le sezioni operative per individuare bozze, mancanti e dati da verificare.","Apri un concessionario o Analisi KPI per approfondire."],destination:"overview",action:"Apri Overview"},
+    {id:"create-dealer",category:"dealers",audience:"JET",title:"Creare un concessionario",summary:"Aggiungi una nuova anagrafica direttamente dal portale.",steps:["Apri Concessionari e seleziona Nuovo concessionario.","Inserisci Dealer ID, ragione sociale, regione, area geografica e area manager.","Aggiungi referente ed email quando disponibili.","Conferma: se esiste una rilevazione aperta, il dealer viene associato automaticamente e riceve il proprio link."],destination:"dealers",action:"Vai a Concessionari"},
+    {id:"edit-dealer",category:"dealers",audience:"JET",title:"Modificare o disattivare un concessionario",summary:"Aggiorna l’anagrafica senza perdere rilevazioni, note o audit.",steps:["Apri il concessionario dalla tabella.","Seleziona Modifica anagrafica.","Aggiorna Dealer ID, ragione sociale, territorio, manager, referente o email e salva.","Per escluderlo dalle attività future usa Disattiva: lo storico resta consultabile."],destination:"dealers",action:"Cerca un concessionario"},
+    {id:"import-dealers",category:"dealers",audience:"JET",title:"Importare l’anagrafica CSV",summary:"Controlla il file prima di aggiornare l’anagrafica; il CSV non importa KPI.",steps:["Scarica il template CSV dalla pagina Report.","Compila le colonne dealer_id, name, region, area, manager, contact_name ed email.","In Concessionari seleziona Importa anagrafica concessionari e scegli il file.","Controlla l’anteprima: gli errori bloccano la conferma; duplicati ed email mancanti sono evidenziati.","Conferma l’importazione quando il controllo non contiene errori."],destination:"reports",action:"Scarica il template"},
+    {id:"create-campaign",category:"campaigns",audience:"JET",title:"Creare e aprire una rilevazione",summary:"Definisci una campagna annuale e i concessionari coinvolti senza attività tecniche.",steps:["Apri Rilevazioni e seleziona Nuova campagna.","Inserisci nome, anno, numero rilevazione, apertura e scadenza.","Se necessario collega la rilevazione a una precedente.","Seleziona i concessionari coinvolti e salva la bozza.","Controlla l’elenco e seleziona Apri quando la raccolta può iniziare."],destination:"surveys",action:"Vai a Rilevazioni"},
+    {id:"manage-campaign",category:"campaigns",audience:"JET",title:"Gestire il ciclo della rilevazione",summary:"Modifica, duplica, chiudi o archivia una rilevazione dall’interfaccia.",steps:["Usa Modifica per aggiornare nome, periodo e scadenza.","Aggiungi o rimuovi concessionari mentre la rilevazione è ancora in bozza.","Usa Duplica per preparare una nuova rilevazione con gli stessi dealer.","Chiudi la raccolta quando non deve più accettare compilazioni.","Archivia una rilevazione chiusa per conservarla nello storico."],destination:"surveys",action:"Gestisci rilevazioni"},
+    {id:"links-qr",category:"collection",audience:"JET",title:"Gestire link e QR Code",summary:"Ogni dealer associato a una rilevazione dispone di un link personale verso il portale.",steps:["Apri Concessionari per copiare rapidamente il link o visualizzare il QR.","Dalla scheda dealer puoi aprire la compilazione e scaricare il QR in SVG.","Controlla ultima apertura e numero di accessi nella sezione Raccolta dati.","Usa Revoca per disabilitare il link oppure Rigenera per sostituirlo; il link precedente non sarà più valido."],destination:"dealers",action:"Apri la rete"},
+    {id:"communications",category:"collection",audience:"JET",title:"Preparare comunicazioni e reminder",summary:"Prepara e registra le comunicazioni senza dichiarare invii che non sono avvenuti.",steps:["In Concessionari seleziona Prepara comunicazioni.","Scegli invio iniziale oppure reminder per mancanti e bozze.","Controlla destinatario, email, duplicati, stato e link personale.","Seleziona i dealer, modifica testo base e firma, quindi conferma.","Il portale registra la preparazione nell’audit; nessuna email viene inviata."],destination:"dealers",action:"Prepara comunicazioni"},
+    {id:"dealer-questionnaire",category:"collection",audience:"Concessionario",title:"Compilare e inviare il questionario",summary:"Il concessionario usa esclusivamente il proprio link e non accede alla dashboard.",steps:["Apri il link personale ricevuto da JET.","Compila i KPI sezione per sezione; unità, limiti ed errori sono mostrati vicino ai campi.","Usa Salva bozza oppure attendi l’autosalvataggio prima di chiudere.","Apri il riepilogo, correggi eventuali campi e conferma l’invio.","Dopo l’invio i dati sono bloccati finché JET non riapre la compilazione."],destination:"help",action:"Resta nel Centro assistenza"},
+    {id:"review-submission",category:"collection",audience:"JET",title:"Modificare, riaprire e validare una compilazione",summary:"Gestisci i dati ricevuti dalla scheda concessionario mantenendo ricalcoli e audit.",steps:["Apri il dealer e controlla stato, KPI, confronto rete e storico.","Usa Modifica valori per correggere i KPI base: i derivati vengono ricalcolati e lo stato passa a Da verificare.","Usa Riapri compilazione per permettere al dealer di correggere e reinviare la stessa rilevazione.","Quando i controlli sono conclusi seleziona Valida dati."],destination:"dealers",action:"Apri Concessionari"},
+    {id:"notes",category:"dealers",audience:"JET",title:"Aggiungere una nota interna",summary:"Registra un’annotazione operativa collegata al concessionario.",steps:["Apri la scheda del concessionario.","Seleziona Aggiungi nota.","Inserisci il testo e conferma.","La nota compare nella sezione Note JET ed è nascosta nella vista SDF."],destination:"dealers",action:"Apri Concessionari"},
+    {id:"analysis-export",category:"analysis",audience:"JET · SDF",title:"Analizzare KPI ed esportare i dati",summary:"Usa lo stesso dataset persistito per benchmark, dettaglio ed export CSV.",steps:["Apri Analisi KPI e seleziona KPI e rilevazione.","Applica i filtri per leggere media, mediana, minimo, massimo, distribuzione regionale e ranking.","Apri il dettaglio dealer per confrontare valore attuale, media rete e rilevazione precedente.","Usa Esporta dati oppure la pagina Report per scaricare il CSV della rilevazione corrente."],destination:"analysis",action:"Apri Analisi KPI"},
+    {id:"sdf-readonly",category:"roles",audience:"SDF",title:"Consultare il portale in sola lettura",summary:"La vista SDF consente analisi e report senza mostrare strumenti amministrativi.",steps:["Nel selettore demo scegli Vista SDF.","Consulta Overview, Concessionari, Analisi KPI, confronti e Report.","Apri le schede dealer per leggere KPI e storico.","Le azioni di creazione, modifica, note, link, reminder e validazione non sono disponibili."],destination:"overview",action:"Apri Overview"}
   ];
 
   function normalizeSearch(value) {
@@ -93,7 +115,8 @@
   function globalSearchCorpus() {
     const dealerItems=(state.searchDealers || []).map((dealer) => ({ type:"dealer",id:dealer.id,label:dealer.name,description:`${dealer.id} · ${dealer.region} · ${dealer.area}`,dealerId:dealer.id,icon:"dealers",keywords:`${dealer.id} ${dealer.name} ${dealer.region} ${dealer.area} ${dealer.manager}` }));
     const kpiItems=(state.config?.kpis || []).map((kpi) => ({ type:"kpi",id:kpi.id,label:kpi.name,description:`${kpi.code} · ${kpi.section || "KPI rete"}`,kpiId:kpi.id,icon:"analysis",keywords:`${kpi.code} ${kpi.name} ${kpi.description || ""} ${kpi.section || ""}` }));
-    return [...searchPages,...dealerItems,...kpiItems];
+    const helpItems=helpGuides.map((guide)=>({type:"help",id:guide.id,label:guide.title,description:`Centro assistenza · ${guide.audience}`,guideId:guide.id,icon:"help",keywords:`${guide.summary} ${guide.steps.join(" ")} ${guide.category} ${guide.audience}`}));
+    return [...searchPages,...dealerItems,...kpiItems,...helpItems];
   }
 
   function renderGlobalSearch(query = "") {
@@ -107,11 +130,11 @@
     state.searchActiveIndex=Math.min(state.searchActiveIndex,Math.max(0,matched.length-1));
     input.setAttribute("aria-activedescendant",matched.length?`global-search-option-${state.searchActiveIndex}`:"");
     if (!matched.length) {
-      results.innerHTML=`<div class="global-search-empty"><strong>Nessun risultato</strong><span>Prova con il nome del concessionario, il Dealer ID o un KPI.</span></div>`;
+      results.innerHTML=`<div class="global-search-empty"><strong>Nessun risultato</strong><span>Prova con un concessionario, un KPI, una sezione o una guida.</span></div>`;
       return;
     }
-    const typeLabels={page:"Sezioni",dealer:"Concessionari",kpi:"KPI"};
-    results.innerHTML=["page","dealer","kpi"].map((type) => {
+    const typeLabels={page:"Sezioni",dealer:"Concessionari",kpi:"KPI",help:"Guide operative"};
+    results.innerHTML=["page","dealer","kpi","help"].map((type) => {
       const items=matched.filter((item)=>item.type===type);
       if (!items.length) return "";
       return `<section class="global-search-group"><h2>${typeLabels[type]}</h2>${items.map((item) => { const index=matched.indexOf(item); return `<button type="button" role="option" id="global-search-option-${index}" aria-selected="${index===state.searchActiveIndex}" data-search-index="${index}"><span class="global-search-icon">${icon(item.icon)}</span><span><strong>${escapeHtml(item.label)}</strong><small>${escapeHtml(item.description)}</small></span><span class="global-search-open">Apri</span></button>`; }).join("")}</section>`;
@@ -133,6 +156,7 @@
     document.querySelector("#global-search-dialog")?.close();
     if (item.type === "dealer") return portalRenderPage("dealer",{dealer:{id:item.dealerId}});
     if (item.type === "kpi") return portalRenderPage("analysis",{kpiId:item.kpiId,campaignId:campaignId()});
+    if (item.type === "help") return portalRenderPage("help",{guideId:item.guideId});
     return portalRenderPage(item.page);
   }
 
@@ -300,6 +324,11 @@
     return `<section class="page" aria-labelledby="page-title">${pageHeader({eyebrow:"Export e condivisione",title:'<span id="page-title">Report</span>',subtitle:"Scarica dati aggregati e valori KPI della campagna corrente."})}<div class="report-grid"><article class="panel report-card"><span class="empty-icon">${icon("reports")}</span><h2>Dataset completo rete</h2><p>CSV con anagrafica dealer, stato della rilevazione, qualità e tutti i KPI.</p><button class="button primary" data-export-csv>${icon("download")}Scarica CSV</button></article><article class="panel report-card"><span class="empty-icon">${icon("dealers")}</span><h2>Importazione concessionari</h2><p>Scarica il tracciato richiesto, compilalo in Excel e importalo dalla pagina Concessionari.</p><a class="button" href="/api/dealers/template.csv">${icon("download")}Scarica template CSV</a></article></div></section>`;
   }
 
+  function helpCenterPage(activeGuideId) {
+    const guideMarkup=helpGuides.map((guide)=>`<details class="help-guide" id="help-${escapeHtml(guide.id)}" data-help-guide data-help-category="${escapeHtml(guide.category)}" data-help-search-text="${escapeHtml(`${guide.title} ${guide.summary} ${guide.steps.join(" ")} ${guide.audience}`)}" ${guide.id===activeGuideId?"open":""}><summary><span class="help-guide-index">${String(helpGuides.indexOf(guide)+1).padStart(2,"0")}</span><span><small>${escapeHtml(guide.audience)}</small><strong>${escapeHtml(guide.title)}</strong><em>${escapeHtml(guide.summary)}</em></span><span class="help-guide-toggle" aria-hidden="true">+</span></summary><div class="help-guide-body"><ol>${guide.steps.map(step=>`<li>${escapeHtml(step)}</li>`).join("")}</ol><button class="button" type="button" data-help-destination="${escapeHtml(guide.destination)}">${escapeHtml(guide.action)}${icon("arrow")}</button></div></details>`).join("");
+    return `<section class="page help-page" aria-labelledby="page-title">${pageHeader({eyebrow:"Supporto operativo",title:'<span id="page-title">Centro assistenza</span>',subtitle:"Procedure verificate per utilizzare le funzioni disponibili nel portale."})}<div class="help-search-panel"><div class="help-search-field">${icon("search")}<label class="sr-only" for="help-search">Cerca una guida</label><input id="help-search" type="search" placeholder="Cerca: concessionario, rilevazione, link, export…" autocomplete="off"><kbd>Invio</kbd></div><p>Le guide descrivono esclusivamente operazioni disponibili dall’interfaccia.</p></div><div class="help-layout"><aside class="help-sidebar panel" aria-label="Categorie assistenza"><p class="eyebrow">Argomenti</p><nav>${helpCategories.map((category,index)=>`<button type="button" data-help-category-filter="${category.id}" class="${index===0?"is-active":""}"><span>${escapeHtml(category.label)}</span><small>${category.id==="all"?helpGuides.length:helpGuides.filter(guide=>guide.category===category.id).length}</small></button>`).join("")}</nav><div class="help-role-note"><strong>Guide per ruolo</strong><p>Ogni procedura indica se è destinata a JET, SDF o al concessionario.</p></div></aside><div class="help-content"><div class="help-content-heading"><div><p class="eyebrow">Procedure</p><h2 id="help-results-title">Tutte le guide</h2></div><span id="help-results-count">${helpGuides.length} guide</span></div><div id="help-guide-list">${guideMarkup}</div><div class="help-empty" id="help-empty" hidden><span>${icon("search")}</span><h2>Nessuna guida trovata</h2><p>Prova con un’operazione o il nome di una sezione del portale.</p><button class="button" type="button" id="help-reset">Mostra tutte le guide</button></div></div></div></section>`;
+  }
+
   function loadingPage() {
     return `<section class="page"><div class="loading-state" aria-busy="true"><span></span><strong>Caricamento dati…</strong></div></section>`;
   }
@@ -361,6 +390,7 @@
       }
       if (page === "surveys") { state.campaigns = await api("/api/campaigns"); const registry=await api(`/api/dealers?campaignId=${campaignId()}`); dealers.splice(0,dealers.length,...registry.dealers.map(normalizeDealer)); main.innerHTML = campaignsPage(); }
       if (page === "reports") main.innerHTML = reportsPage();
+      if (page === "help") main.innerHTML = helpCenterPage(options.guideId);
       if (page === "survey") {
         const token = options.token || new URLSearchParams(location.search).get("token");
         const data = await api(`/api/survey/${encodeURIComponent(token)}`);
@@ -377,15 +407,26 @@
     bindPageEvents();
     bindFunctionalEvents();
     updateNavigation(page === "dealer" ? "dealers" : publicPage ? "" : page);
-    document.querySelector("#mobile-page-title").textContent = ({overview:"Overview",dealers:"Concessionari",dealer:"Dettaglio concessionario",analysis:"Analisi KPI",surveys:"Rilevazioni",reports:"Report",survey:"Compilazione KPI",collection:"Compilazione",confirmation:"Conferma"})[page] || "Portale KPI";
+    document.querySelector("#mobile-page-title").textContent = ({overview:"Overview",dealers:"Concessionari",dealer:"Dettaglio concessionario",analysis:"Analisi KPI",surveys:"Rilevazioni",reports:"Report",help:"Centro assistenza",survey:"Compilazione KPI",collection:"Compilazione",confirmation:"Conferma"})[page] || "Portale KPI";
     clearInterval(state.poller);
     if (page === "overview") state.poller = setInterval(async () => {
       try { state.overview = await api(`/api/overview?campaignId=${campaignId()}`); if (currentPage === "overview") { main.innerHTML=portalOverviewPage(); hydrateIcons(main); bindPageEvents(); bindFunctionalEvents(); syncShell(); } } catch {}
     },20_000);
     window.scrollTo({top:0,behavior:"instant"});
+    if (page === "help" && options.guideId) requestAnimationFrame(()=>document.querySelector(`#help-${CSS.escape(options.guideId)}`)?.scrollIntoView({block:"start"}));
   }
 
   function bindFunctionalEvents() {
+    const helpSearch=main.querySelector("#help-search");
+    if(helpSearch){
+      let activeCategory="all";
+      const applyHelpFilters=()=>{const term=normalizeSearch(helpSearch.value);let visible=0;main.querySelectorAll("[data-help-guide]").forEach((guide)=>{const matchesCategory=activeCategory==="all"||guide.dataset.helpCategory===activeCategory;const matchesTerm=!term||normalizeSearch(guide.dataset.helpSearchText).includes(term);guide.hidden=!(matchesCategory&&matchesTerm);if(!guide.hidden)visible+=1});const category=helpCategories.find(item=>item.id===activeCategory);main.querySelector("#help-results-title").textContent=term?"Risultati della ricerca":category?.label||"Tutte le guide";main.querySelector("#help-results-count").textContent=`${visible} ${visible===1?"guida":"guide"}`;main.querySelector("#help-empty").hidden=visible>0};
+      helpSearch.addEventListener("input",applyHelpFilters);
+      helpSearch.addEventListener("keydown",event=>{if(event.key==="Enter"){event.preventDefault();const first=main.querySelector("[data-help-guide]:not([hidden])");if(first){first.open=true;first.scrollIntoView({behavior:"smooth",block:"start"})}}});
+      main.querySelectorAll("[data-help-category-filter]").forEach(button=>button.addEventListener("click",()=>{activeCategory=button.dataset.helpCategoryFilter;main.querySelectorAll("[data-help-category-filter]").forEach(item=>item.classList.toggle("is-active",item===button));applyHelpFilters()}));
+      main.querySelector("#help-reset")?.addEventListener("click",()=>{helpSearch.value="";activeCategory="all";main.querySelectorAll("[data-help-category-filter]").forEach(item=>item.classList.toggle("is-active",item.dataset.helpCategoryFilter==="all"));applyHelpFilters();helpSearch.focus()});
+      main.querySelectorAll("[data-help-destination]").forEach(button=>button.addEventListener("click",()=>portalRenderPage(button.dataset.helpDestination)));
+    }
     main.querySelectorAll("[data-export-csv]").forEach((button) => button.addEventListener("click", () => { location.href = `/api/reports/csv?campaignId=${campaignId()}`; }));
     main.querySelectorAll("[data-dealer-id]").forEach((button) => button.addEventListener("click", () => {
       selectedDealer = dealers.find((dealer) => dealer.id === button.dataset.dealerId) || { id:button.dataset.dealerId };
@@ -544,6 +585,8 @@
   analysisPage = portalAnalysisPage;
   renderPage = portalRenderPage;
 
+  document.querySelector("#help-center-button")?.addEventListener("click",()=>portalRenderPage("help"));
+
   document.querySelector("#demo-role-select")?.addEventListener("change",async(event)=>{
     state.role=event.target.value === "SDF" ? "SDF" : "JET";
     localStorage.setItem("sdf-demo-role",state.role);
@@ -574,5 +617,5 @@
   if (collectionPath) portalRenderPage(collectionPath[2] ? "confirmation" : "collection",{token:decodeURIComponent(collectionPath[1])});
   else if (requested === "survey") portalRenderPage("survey",{token:params.get("token")});
   else if (requested === "dealer") portalRenderPage("dealer",{dealer:{id:params.get("dealer") || "DEMO-001"}});
-  else portalRenderPage(["overview","dealers","analysis","surveys","reports"].includes(requested) ? requested : "overview");
+  else portalRenderPage(["overview","dealers","analysis","surveys","reports","help"].includes(requested) ? requested : "overview");
 })();

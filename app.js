@@ -39,7 +39,8 @@ const icons = {
   location: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>',
   arrow: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m5 12 14 0m-5-5 5 5-5 5"/></svg>',
   back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>',
-  filter: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16M7 12h10m-7 7h4"/></svg>'
+  filter: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16M7 12h10m-7 7h4"/></svg>',
+  help: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M9.7 9a2.5 2.5 0 1 1 3.8 2.1c-1 .6-1.5 1.1-1.5 2.4M12 17h.01"/></svg>'
 };
 
 const statusLabel = { complete: "Completato", verify: "Da verificare", missing: "Non compilato" };
@@ -180,11 +181,11 @@ function renderPage(page, options = {}) {
   if (page === "dealers") main.innerHTML = dealersPage();
   if (page === "dealer") main.innerHTML = dealerDetailPage(options.dealer || selectedDealer);
   if (page === "analysis") main.innerHTML = analysisPage();
-  if (page === "surveys" || page === "reports") main.innerHTML = futurePage(page);
+  if (page === "surveys" || page === "reports" || page === "help") main.innerHTML = futurePage(page);
   hydrateIcons(main);
   bindPageEvents();
   updateNavigation(page === "dealer" ? "dealers" : page);
-  document.querySelector("#mobile-page-title").textContent = page === "dealer" ? "Dettaglio concessionario" : ({overview:"Overview",dealers:"Concessionari",analysis:"Analisi KPI",surveys:"Rilevazioni",reports:"Report"}[page]);
+  document.querySelector("#mobile-page-title").textContent = page === "dealer" ? "Dettaglio concessionario" : ({overview:"Overview",dealers:"Concessionari",analysis:"Analisi KPI",surveys:"Rilevazioni",reports:"Report",help:"Centro assistenza"}[page]);
   window.scrollTo({ top: 0, behavior: "instant" });
 }
 
@@ -247,7 +248,7 @@ document.addEventListener("keydown", (event) => { if (event.key === "Escape") cl
 document.querySelectorAll("[data-global-action='search']").forEach((element) => element.addEventListener("click", () => document.dispatchEvent(new CustomEvent("sdf:global-search",{detail:{trigger:element}}))));
 hydrateIcons();
 const initialParams = new URLSearchParams(window.location.search);
-const allowedPages = ["overview", "dealers", "dealer", "analysis", "surveys", "reports"];
+const allowedPages = ["overview", "dealers", "dealer", "analysis", "surveys", "reports", "help"];
 const initialPage = allowedPages.includes(initialParams.get("page")) ? initialParams.get("page") : "overview";
 if (initialPage === "dealer") {
   selectedDealer = dealers.find((dealer) => dealer.id === initialParams.get("dealer")) || dealers[0];
