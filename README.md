@@ -60,7 +60,11 @@ Il dealer può salvare manualmente o con autosalvataggio debounced (1,8 secondi)
 | GET | `/api/overview` | Avanzamento reale da SQLite |
 | GET | `/api/dealers` | Dealer e stati raccolta |
 | GET | `/api/dealers/:id` | KPI, storico e raccolta |
+| POST/PUT | `/api/dealers`, `/api/dealers/:id` | Crea, modifica o disattiva un dealer |
+| POST | `/api/dealers/import/preview` | Anteprima CSV con errori e avvisi |
 | POST | `/api/dealers/import` | Import anagrafica CSV, non KPI |
+| POST/PUT | `/api/campaigns/*` | Crea, modifica, associa, duplica e cambia stato rilevazioni |
+| GET/POST | `/api/campaigns/:id/distribution` | Verifica e registra comunicazioni preparate |
 | GET/POST | `/api/dealers/:id/collection-link/*` | Link, revoca e rigenerazione JET |
 | POST | `/api/dealers/:id/submission/status` | Validazione o riapertura JET |
 | GET | `/api/collection-links/:id/qr.svg` | QR verso il portale |
@@ -73,7 +77,9 @@ Gli endpoint legacy `/api/survey/:token` e il modulo Jotform restano disponibili
 
 ## Migrazione database
 
-L'avvio aggiunge in modo non distruttivo metadati del questionario alle definizioni KPI e `questionnaire_version`, issue e revisione alle submission. I KPI legacy sono conservati ma marcati inattivi; i dati demo compatibili vengono migrati e completati per `demo-v1`. Non vengono eliminate compilazioni, note o audit esistenti.
+L'avvio aggiunge in modo non distruttivo metadati del questionario alle definizioni KPI e `questionnaire_version`, issue e revisione alle submission. Aggiunge inoltre `campaign_dealers` per le associazioni esplicite, referente e stato anagrafico, metadati di archiviazione e `operational_settings` per testo reminder e firma. I KPI legacy sono conservati ma marcati inattivi; i dati demo compatibili vengono migrati e completati per `demo-v1`. Non vengono eliminate compilazioni, note o audit esistenti.
+
+La matrice completa delle operazioni autonome è in [`docs/autonomy-audit.md`](docs/autonomy-audit.md).
 
 Decisioni: [ADR-001](docs/decisions/ADR-001-local-mvp-stack.md), [ADR-002](docs/decisions/ADR-002-jotform-collection-integration.md), [ADR-003](docs/decisions/ADR-003-proprietary-questionnaire.md).
 

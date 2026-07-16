@@ -366,6 +366,25 @@ tbody tr:last-child td { border-bottom:0; }
 .campaign-row { min-height:132px; display:grid; grid-template-columns:minmax(0,1fr) auto auto; align-items:center; gap:32px; padding:22px 24px; }
 .campaign-row h2 { margin:11px 0 6px; }
 .campaign-row p { margin:0; color:var(--muted); font-size:9px; }
+.campaign-actions { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:8px; max-width:310px; }
+.operational-dialog { width:min(880px,calc(100vw - 28px)); }
+.operational-dialog-body { padding:24px 30px; }
+.operational-form-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; padding:26px 30px; }
+.operational-form-grid label,.communication-fields label { display:grid; gap:7px; color:var(--muted); font-size:10px; font-weight:700; }
+.operational-form-grid input,.operational-form-grid select,.communication-fields input,.communication-fields select,.communication-fields textarea { width:100%; min-height:42px; padding:10px 12px; border:1px solid var(--line); border-radius:8px; color:var(--ink); background:var(--white); font:inherit; }
+.dealer-selector { margin:0 30px 26px; padding:18px; border:1px solid var(--line); border-radius:10px; }
+.dealer-selector legend { padding:0 8px; font-weight:700; }
+.dealer-selector>div:first-of-type { display:flex; justify-content:space-between; margin-bottom:14px; }
+.dealer-check-list,.recipient-list { max-height:280px; overflow:auto; border-top:1px solid var(--line); }
+.dealer-check-list label,.recipient-list label { display:flex; gap:10px; align-items:flex-start; padding:11px 4px; border-bottom:1px solid var(--line); }
+.dealer-check-list span,.recipient-list span { display:grid; gap:3px; min-width:0; }
+.dealer-check-list small,.recipient-list small { color:var(--muted); font-weight:400; }
+.communication-fields { display:grid; grid-template-columns:2fr 1fr; gap:18px; margin-bottom:20px; }
+.distribution-summary { display:flex; justify-content:space-between; gap:16px; padding:12px 0; border-block:1px solid var(--line); }
+.recipient-list code { overflow:hidden; color:var(--muted); font-size:9px; text-overflow:ellipsis; white-space:nowrap; }
+.recipient-list em { color:var(--danger); font-size:9px; font-style:normal; }
+.recipient-list .has-issues { background:#fff8f6; }
+.provider-warning { color:var(--muted); font-size:10px; font-weight:700; }
 .campaign-kpis { display:flex; gap:28px; }
 .campaign-kpis span { color:var(--muted); font-size:9px; }
 .campaign-kpis strong { display:block; margin-bottom:5px; color:var(--ink); font-size:18px; font-weight:500; }
@@ -587,6 +606,10 @@ code { padding:2px 5px; border-radius:5px; background:var(--gray-75); font-famil
 }
 
 @media (max-width:640px) {
+  .operational-form-grid,.communication-fields { grid-template-columns:1fr; }
+  .operational-dialog-body,.operational-form-grid { padding-inline:18px; }
+  .dealer-selector { margin-inline:18px; }
+  .campaign-actions { justify-content:flex-start; max-width:none; }
   .topbar-actions { gap:6px; }
   .demo-role-control { padding:5px; font-size:0; }
   .demo-role-control select { max-width:96px; font-size:8px; }

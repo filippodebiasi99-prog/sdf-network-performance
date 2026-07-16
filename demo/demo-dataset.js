@@ -153,7 +153,7 @@ export function resetDemoDataset(database) {
   assertDemoOnly(database);
   database.exec("BEGIN");
   try {
-    database.exec("DELETE FROM jotform_submissions; DELETE FROM kpi_values; DELETE FROM submissions; DELETE FROM dealer_campaign_links; DELETE FROM notes; DELETE FROM audit_events; DELETE FROM dealers; DELETE FROM campaigns;");
+    database.exec("DELETE FROM jotform_submissions; DELETE FROM kpi_values; DELETE FROM submissions; DELETE FROM dealer_campaign_links; DELETE FROM campaign_dealers; DELETE FROM notes; DELETE FROM audit_events; DELETE FROM dealers; DELETE FROM campaigns;");
     database.prepare("INSERT INTO campaigns(id,name,year,survey_no,open_date,close_date,status) VALUES(?,?,?,?,?,?,?)").run(DEMO_CAMPAIGN_ID,"Rilevazione 1 — 2026",2026,1,"2026-01-01","2026-12-31","open");
     database.prepare("INSERT INTO campaigns(id,name,year,survey_no,open_date,close_date,status) VALUES(?,?,?,?,?,?,?)").run(DEMO_HISTORY_CAMPAIGN_ID,"Rilevazione 2 — 2025",2025,2,"2025-01-01","2025-12-31","closed");
     const insertDealer=database.prepare("INSERT INTO dealers(id,name,initials,region,area,manager,email,access_token) VALUES(?,?,?,?,?,?,?,?)");

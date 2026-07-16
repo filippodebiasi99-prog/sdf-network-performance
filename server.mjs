@@ -60,6 +60,17 @@ export function initializeDatabase(database = db) {
       status TEXT NOT NULL CHECK(status IN ('draft','open','closed')),
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
+    CREATE TABLE IF NOT EXISTS campaign_dealers (
+      campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+      dealer_id TEXT NOT NULL REFERENCES dealers(id),
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY(campaign_id,dealer_id)
+    );
+    CREATE TABLE IF NOT EXISTS operational_settings (
+      setting_key TEXT PRIMARY KEY,
+      setting_value TEXT NOT NULL,
+      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
     CREATE TABLE IF NOT EXISTS kpi_definitions (
       id TEXT PRIMARY KEY,
       code TEXT NOT NULL UNIQUE,
@@ -168,6 +179,9 @@ export function initializeDatabase(database = db) {
   ensureColumn(database,"submissions","validation_issues_json","TEXT NOT NULL DEFAULT '[]'");
   ensureColumn(database,"submissions","reviewed_at","TEXT");
   ensureColumn(database,"submissions","reviewed_by","TEXT");
+  ensureColumn(database,"dealers","contact_name","TEXT NOT NULL DEFAULT ''");
+  ensureColumn(database,"campaigns","parent_campaign_id","TEXT");
+  ensureColumn(database,"campaigns","archived_at","TEXT");
   ensureColumn(database,"kpi_values","source_type","TEXT NOT NULL DEFAULT 'MANUAL_DEMO'");
   ensureColumn(database,"kpi_values","external_submission_id","TEXT");
   ensureColumn(database,"kpi_definitions","section","TEXT");
@@ -182,9 +196,20 @@ export function initializeDatabase(database = db) {
   ensureLegacyKpiDefinitions(database);
   ensureKpiDefinitions(database);
   seedDemoDataset(database);
+  ensureCampaignAssociations(database);
   migrateLegacyKpis(database);
   ensureDemoQuestionnaireValues(database);
   ensureCampaignLinks(database);
+}
+
+function ensureCampaignAssociations(database) {
+  const count=database.prepare("SELECT COUNT(*) AS count FROM campaign_dealers").get().count;
+  if (count) return;
+  database.prepare("INSERT OR IGNORE INTO campaign_dealers(campaign_id,dealer_id) SELECT c.id,d.id FROM campaigns c CROSS JOIN dealers d WHERE d.active=1").run();
+}
+
+function associateDealerWithOpenCampaigns(database,dealerId) {
+  database.prepare("INSERT OR IGNORE INTO campaign_dealers(campaign_id,dealer_id) SELECT id,? FROM campaigns WHERE status='open'").run(dealerId);
 }
 
 function ensureColumn(database, table, column, definition) {
@@ -193,11 +218,10 @@ function ensureColumn(database, table, column, definition) {
 
 function ensureCampaignLinks(database) {
   const insert = database.prepare("INSERT OR IGNORE INTO dealer_campaign_links(id,dealer_id,campaign_id,token_hash,token_nonce,expires_at) VALUES(?,?,?,?,?,?)");
-  const dealers = database.prepare("SELECT id FROM dealers WHERE active=1").all();
-  const campaigns = database.prepare("SELECT id,close_date FROM campaigns").all();
-  for (const dealer of dealers) for (const campaign of campaigns) {
+  const assignments = database.prepare("SELECT cd.dealer_id,c.id AS campaign_id,c.close_date FROM campaign_dealers cd JOIN campaigns c ON c.id=cd.campaign_id JOIN dealers d ON d.id=cd.dealer_id WHERE d.active=1").all();
+  for (const assignment of assignments) {
     const created = createDealerLinkToken(JOTFORM.linkSecret);
-    insert.run(created.id,dealer.id,campaign.id,created.tokenHash,created.nonce,`${campaign.close_date}T23:59:59.999Z`);
+    insert.run(created.id,assignment.dealer_id,assignment.campaign_id,created.tokenHash,created.nonce,`${assignment.close_date}T23:59:59.999Z`);
   }
 }
 
@@ -332,8 +356,8 @@ function collectionLinkUrl(token, request) {
   return `${base}/compila/${encodeURIComponent(token)}`;
 }
 
-function adminLinkPayload(database, dealerId, campaignId, request) {
-  ensureCampaignLinks(database);
+function adminLinkPayload(database, dealerId, campaignId, request,createMissing=true) {
+  if(createMissing) ensureCampaignLinks(database);
   const row = database.prepare("SELECT * FROM dealer_campaign_links WHERE dealer_id=? AND campaign_id=?").get(dealerId,campaignId);
   if (!row) throw Object.assign(new Error("Link di compilazione non trovato"),{ status:404 });
   const token = restoreDealerLinkToken(JOTFORM.linkSecret,row.id,row.token_nonce);
@@ -369,9 +393,10 @@ function dealerRows(database, campaignId, filters = {}) {
       s.updated_at,s.submitted_at,COALESCE(s.source_type,'PROPRIETARY') AS source_type,
       COALESCE(s.collection_status,CASE WHEN s.id IS NULL THEN 'NOT_STARTED' WHEN s.status='draft' THEN 'DRAFT' WHEN s.status='verify' THEN 'NEEDS_REVIEW' ELSE 'SUBMITTED' END) AS collection_status,
       CASE WHEN s.id IS NULL THEN 0 ELSE ROUND(100.0 * (SELECT COUNT(*) FROM kpi_values kv JOIN kpi_definitions kd ON kd.id=kv.kpi_id WHERE kv.submission_id=s.id AND kd.required=1 AND kd.active=1) / NULLIF((SELECT COUNT(*) FROM kpi_definitions WHERE required=1 AND active=1),0)) END AS completion
-    FROM dealers d LEFT JOIN submissions s ON s.dealer_id=d.id AND s.campaign_id=?
-    WHERE ${clauses.join(" AND ")} ORDER BY d.name
-  `).all(...params);
+    FROM campaign_dealers cd JOIN dealers d ON d.id=cd.dealer_id LEFT JOIN submissions s ON s.dealer_id=d.id AND s.campaign_id=?
+    AND cd.campaign_id=s.campaign_id
+    WHERE cd.campaign_id=? AND ${clauses.join(" AND ")} ORDER BY d.name
+  `).all(campaignId,...params);
 }
 
 function overviewPayload(database, campaignId) {
@@ -433,7 +458,7 @@ function overviewPayload(database, campaignId) {
 
 function dealerDetail(database, dealerId, campaignId, request) {
   const campaign = selectedCampaign(database, campaignId);
-  const dealerRecord = database.prepare("SELECT id,name,initials,region,area,manager,email,access_token FROM dealers WHERE id=?").get(dealerId);
+  const dealerRecord = database.prepare("SELECT id,name,initials,region,area,manager,email,contact_name,active,access_token FROM dealers WHERE id=?").get(dealerId);
   if (!dealerRecord || !campaign) throw Object.assign(new Error("Concessionario o campagna non trovati"), { status: 404 });
   const { access_token:accessToken, ...dealer } = dealerRecord;
   const submission = database.prepare("SELECT * FROM submissions WHERE dealer_id=? AND campaign_id=?").get(dealerId,campaign.id);
@@ -644,6 +669,76 @@ function exportCsv(database, campaignId) {
   return lines.join("\n");
 }
 
+const emailPattern=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const initialsFor=(name)=>String(name).split(/\s+/).filter(Boolean).slice(0,2).map((part)=>part[0]).join("").toUpperCase();
+
+function validateDealerInput(body,{ partial=false }={}) {
+  const values={
+    id:String(body.id || body.dealer_id || "").trim(),name:String(body.name || "").trim(),region:String(body.region || "").trim(),
+    area:String(body.area || "").trim(),manager:String(body.manager || "").trim(),contact_name:String(body.contact_name || "").trim(),email:String(body.email || "").trim()
+  };
+  const errors={};
+  if (!partial || "id" in body || "dealer_id" in body) if (!values.id) errors.id="Dealer ID obbligatorio";
+  for (const field of ["name","region","area","manager"]) if ((!partial || field in body) && !values[field]) errors[field]="Campo obbligatorio";
+  if (values.email && !emailPattern.test(values.email)) errors.email="Indirizzo email non valido";
+  if (Object.keys(errors).length) throw Object.assign(new Error("Dati concessionario non validi"),{ status:422,details:errors });
+  return values;
+}
+
+function campaignPayload(database,campaign) {
+  const dealerIds=database.prepare("SELECT dealer_id FROM campaign_dealers WHERE campaign_id=? ORDER BY dealer_id").all(campaign.id).map((row)=>row.dealer_id);
+  return { ...campaign,dealerIds,is_archived:Boolean(campaign.archived_at),progress:overviewPayload(database,campaign.id).totals };
+}
+
+function setCampaignDealers(database,campaignId,dealerIds) {
+  const campaign=database.prepare("SELECT * FROM campaigns WHERE id=?").get(campaignId);
+  if (!campaign) throw Object.assign(new Error("Rilevazione non trovata"),{ status:404 });
+  if (campaign.status !== "draft") throw Object.assign(new Error("I concessionari possono essere modificati solo prima dell'apertura"),{ status:409 });
+  const unique=[...new Set((dealerIds || []).map(String))];
+  const valid=new Set(database.prepare("SELECT id FROM dealers WHERE active=1").all().map((row)=>row.id));
+  const unknown=unique.filter((id)=>!valid.has(id));
+  if (unknown.length) throw Object.assign(new Error("Alcuni concessionari non esistono o sono disattivati"),{ status:422,details:{dealerIds:unknown} });
+  const current=database.prepare("SELECT dealer_id FROM campaign_dealers WHERE campaign_id=?").all(campaignId).map((row)=>row.dealer_id);
+  const removed=current.filter((dealerId)=>!unique.includes(dealerId));
+  database.exec("BEGIN");
+  try {
+    const removeLink=database.prepare("DELETE FROM dealer_campaign_links WHERE campaign_id=? AND dealer_id=?");
+    const removeAssignment=database.prepare("DELETE FROM campaign_dealers WHERE campaign_id=? AND dealer_id=?");
+    removed.forEach((dealerId)=>{removeLink.run(campaignId,dealerId);removeAssignment.run(campaignId,dealerId)});
+    const insert=database.prepare("INSERT OR IGNORE INTO campaign_dealers(campaign_id,dealer_id) VALUES(?,?)");
+    unique.forEach((dealerId)=>insert.run(campaignId,dealerId));
+    database.exec("COMMIT");
+  } catch(error) { database.exec("ROLLBACK"); throw error; }
+  ensureCampaignLinks(database);
+  return unique;
+}
+
+function importPreview(database,items) {
+  if (!Array.isArray(items) || !items.length || items.length>500) throw Object.assign(new Error("Il file deve contenere da 1 a 500 concessionari"),{ status:422 });
+  const seenIds=new Set(),seenEmails=new Set();
+  const rows=items.map((item,index)=>{
+    let values,validationErrors={};
+    try { values=validateDealerInput(item); } catch(error) { validationErrors=error.details || {}; values={id:String(item.dealer_id||item.id||"").trim(),name:String(item.name||"").trim(),region:String(item.region||"").trim(),area:String(item.area||"").trim(),manager:String(item.manager||"").trim(),contact_name:String(item.contact_name||"").trim(),email:String(item.email||"").trim()}; }
+    const row={ row:index+2,...values };
+    const issues=[];
+    Object.entries(validationErrors).forEach(([field,message])=>issues.push({severity:"ERROR",field,message}));
+    if (seenIds.has(row.id)) issues.push({severity:"ERROR",field:"dealer_id",message:"Dealer ID duplicato nel file"});
+    if (row.email && seenEmails.has(row.email.toLowerCase())) issues.push({severity:"ERROR",field:"email",message:"Email duplicata nel file"});
+    if (database.prepare("SELECT 1 FROM dealers WHERE id=?").get(row.id)) issues.push({severity:"WARNING",field:"dealer_id",message:"Dealer già presente: verrà aggiornato"});
+    const emailOwner=row.email ? database.prepare("SELECT id FROM dealers WHERE LOWER(email)=LOWER(?) AND id<>?").get(row.email,row.id) : null;
+    if(emailOwner) issues.push({severity:"ERROR",field:"email",message:`Email già associata a ${emailOwner.id}`});
+    if (!row.email) issues.push({severity:"WARNING",field:"email",message:"Email mancante"});
+    seenIds.add(row.id); if(row.email)seenEmails.add(row.email.toLowerCase());
+    return { ...row,issues };
+  });
+  return { rows,errors:rows.flatMap((row)=>row.issues.filter((issue)=>issue.severity==="ERROR")).length,warnings:rows.flatMap((row)=>row.issues.filter((issue)=>issue.severity==="WARNING")).length };
+}
+
+function communicationSettings(database) {
+  const saved=Object.fromEntries(database.prepare("SELECT setting_key,setting_value FROM operational_settings WHERE setting_key IN ('reminder_text','communication_signature')").all().map((row)=>[row.setting_key,row.setting_value]));
+  return { reminderText:saved.reminder_text || "Gentile concessionario, la rilevazione è ancora da completare. Utilizzi il link personale riportato di seguito.",signature:saved.communication_signature || "Team JET" };
+}
+
 export async function handleApi(request, response, url, database = db) {
   const path = url.pathname;
   if (request.method === "GET" && path === "/api/health") return json(response,200,{ status:"ok",database:"sqlite",time:new Date().toISOString() });
@@ -652,7 +747,7 @@ export async function handleApi(request, response, url, database = db) {
   if (request.method === "GET" && path === "/api/dealers") return json(response,200,{ campaign:selectedCampaign(database,url.searchParams.get("campaignId")),dealers:dealerRows(database,url.searchParams.get("campaignId") || selectedCampaign(database).id,{ search:url.searchParams.get("search"),region:url.searchParams.get("region"),status:url.searchParams.get("status") }) });
   if (request.method === "GET" && path === "/api/analysis") return json(response,200,analysisPayload(database,url.searchParams.get("campaignId"),url.searchParams.get("kpiId")));
   if (request.method === "GET" && path === "/api/campaigns") {
-    const campaigns = database.prepare("SELECT * FROM campaigns ORDER BY year DESC,survey_no DESC").all().map((campaign) => ({ ...campaign, progress:overviewPayload(database,campaign.id).totals }));
+    const campaigns = database.prepare("SELECT * FROM campaigns ORDER BY year DESC,survey_no DESC").all().map((campaign) => campaignPayload(database,campaign));
     return json(response,200,{ campaigns });
   }
   if (request.method === "POST" && path === "/api/campaigns") {
@@ -661,10 +756,66 @@ export async function handleApi(request, response, url, database = db) {
     const id = String(body.id || `campaign-${body.year}-${body.survey_no}`).trim();
     if (!id || !body.name || !Number.isInteger(Number(body.year)) || !Number.isInteger(Number(body.survey_no)) || !body.open_date || !body.close_date) throw Object.assign(new Error("Dati campagna incompleti"),{ status:422 });
     if (new Date(body.close_date) <= new Date(body.open_date)) throw Object.assign(new Error("La chiusura deve essere successiva all'apertura"),{ status:422 });
-    database.prepare("INSERT INTO campaigns(id,name,year,survey_no,open_date,close_date,status) VALUES(?,?,?,?,?,?,?)").run(id,String(body.name).trim(),Number(body.year),Number(body.survey_no),body.open_date,body.close_date,["draft","open","closed"].includes(body.status)?body.status:"draft");
+    database.prepare("INSERT INTO campaigns(id,name,year,survey_no,open_date,close_date,status,parent_campaign_id) VALUES(?,?,?,?,?,?,?,?)").run(id,String(body.name).trim(),Number(body.year),Number(body.survey_no),body.open_date,body.close_date,"draft",body.parent_campaign_id || null);
+    try { setCampaignDealers(database,id,Array.isArray(body.dealerIds)?body.dealerIds:[]); } catch(error) { database.prepare("DELETE FROM campaigns WHERE id=?").run(id); throw error; }
     ensureCampaignLinks(database);
     database.prepare("INSERT INTO audit_events(campaign_id,event_type,actor,payload) VALUES(?,?,?,?)").run(id,"campaign_created","JET Admin",JSON.stringify({ name:body.name }));
     return json(response,201,{ ok:true,id });
+  }
+  const campaignMatch=path.match(/^\/api\/campaigns\/([^/]+)(?:\/(dealers|status|duplicate|distribution))?$/);
+  if (campaignMatch) {
+    const campaignId=decodeURIComponent(campaignMatch[1]);
+    const action=campaignMatch[2];
+    const campaign=database.prepare("SELECT * FROM campaigns WHERE id=?").get(campaignId);
+    if (!campaign) throw Object.assign(new Error("Rilevazione non trovata"),{status:404});
+    if (request.method === "PUT" && !action) {
+      requireJet(request); const body=await parseBody(request);
+      if (!["draft","open"].includes(campaign.status)) throw Object.assign(new Error("Una rilevazione chiusa non può essere modificata"),{status:409});
+      const next={name:String(body.name ?? campaign.name).trim(),year:Number(body.year ?? campaign.year),survey_no:Number(body.survey_no ?? campaign.survey_no),open_date:body.open_date || campaign.open_date,close_date:body.close_date || campaign.close_date,parent_campaign_id:body.parent_campaign_id ?? campaign.parent_campaign_id};
+      if (!next.name || !Number.isInteger(next.year) || !Number.isInteger(next.survey_no) || new Date(next.close_date)<=new Date(next.open_date)) throw Object.assign(new Error("Dati rilevazione non validi"),{status:422});
+      database.prepare("UPDATE campaigns SET name=?,year=?,survey_no=?,open_date=?,close_date=?,parent_campaign_id=? WHERE id=?").run(next.name,next.year,next.survey_no,next.open_date,next.close_date,next.parent_campaign_id || null,campaignId);
+      database.prepare("UPDATE dealer_campaign_links SET expires_at=? WHERE campaign_id=?").run(`${next.close_date}T23:59:59.999Z`,campaignId);
+      database.prepare("INSERT INTO audit_events(campaign_id,event_type,actor,payload) VALUES(?,?,?,?)").run(campaignId,"campaign_updated","JET Admin",JSON.stringify(next));
+      return json(response,200,{ok:true});
+    }
+    if (request.method === "PUT" && action === "dealers") {
+      requireJet(request); const body=await parseBody(request); const dealerIds=setCampaignDealers(database,campaignId,body.dealerIds);
+      database.prepare("INSERT INTO audit_events(campaign_id,event_type,actor,payload) VALUES(?,?,?,?)").run(campaignId,"campaign_dealers_updated","JET Admin",JSON.stringify({dealerIds}));
+      return json(response,200,{ok:true,count:dealerIds.length});
+    }
+    if (request.method === "POST" && action === "status") {
+      requireJet(request); const body=await parseBody(request); const requested=String(body.status || "").toLowerCase();
+      if (!["draft","open","closed","archived"].includes(requested)) throw Object.assign(new Error("Stato rilevazione non valido"),{status:422});
+      const current=campaign.archived_at ? "archived" : campaign.status;
+      const transitions={draft:["open","closed"],open:["closed"],closed:["archived"],archived:[]};
+      if(!transitions[current].includes(requested)) throw Object.assign(new Error(`Passaggio da ${current} a ${requested} non consentito`),{status:409});
+      if (requested === "open" && !database.prepare("SELECT COUNT(*) AS count FROM campaign_dealers WHERE campaign_id=?").get(campaignId).count) throw Object.assign(new Error("Associare almeno un concessionario prima dell'apertura"),{status:409});
+      const stored=requested === "archived" ? "closed" : requested;
+      database.prepare("UPDATE campaigns SET status=?,archived_at=? WHERE id=?").run(stored,requested === "archived" ? new Date().toISOString() : null,campaignId);
+      database.prepare("INSERT INTO audit_events(campaign_id,event_type,actor,payload) VALUES(?,?,?,?)").run(campaignId,requested === "archived"?"campaign_archived":"campaign_status_changed","JET Admin",JSON.stringify({previous:campaign.status,next:requested}));
+      return json(response,200,{ok:true,status:requested});
+    }
+    if (request.method === "POST" && action === "duplicate") {
+      requireJet(request); const body=await parseBody(request); const year=Number(body.year || campaign.year+1); const surveyNo=Number(body.survey_no || campaign.survey_no); const id=String(body.id || `campaign-${year}-${surveyNo}-${Date.now().toString(36)}`);
+      database.prepare("INSERT INTO campaigns(id,name,year,survey_no,open_date,close_date,status,parent_campaign_id) VALUES(?,?,?,?,?,?,?,?)").run(id,String(body.name || `${campaign.name} — copia`),year,surveyNo,body.open_date || `${year}-01-01`,body.close_date || `${year}-12-31`,"draft",campaignId);
+      database.prepare("INSERT INTO campaign_dealers(campaign_id,dealer_id) SELECT ?,dealer_id FROM campaign_dealers WHERE campaign_id=?").run(id,campaignId); ensureCampaignLinks(database);
+      database.prepare("INSERT INTO audit_events(campaign_id,event_type,actor,payload) VALUES(?,?,?,?)").run(id,"campaign_duplicated","JET Admin",JSON.stringify({sourceCampaignId:campaignId}));
+      return json(response,201,{ok:true,id});
+    }
+    if (request.method === "GET" && action === "distribution") {
+      requireJet(request); ensureCampaignLinks(database);
+      const rows=dealerRows(database,campaignId); const duplicates=new Set(rows.filter((row,index)=>row.email && rows.findIndex((other)=>other.email.toLowerCase()===row.email.toLowerCase())!==index).map((row)=>row.email.toLowerCase()));
+      const recipients=rows.map((row)=>{const link=adminLinkPayload(database,row.id,campaignId,request,false);const issues=[];if(!row.email)issues.push("Email mancante");else if(!emailPattern.test(row.email))issues.push("Email non valida");if(row.email&&duplicates.has(row.email.toLowerCase()))issues.push("Email duplicata");return {...row,link:link.url,issues};});
+      return json(response,200,{campaign,recipients,settings:communicationSettings(database),providerConfigured:false});
+    }
+    if (request.method === "POST" && action === "distribution") {
+      requireJet(request); const body=await parseBody(request); const distribution=dealerRows(database,campaignId); const allowed=new Set(distribution.map((row)=>row.id)); const dealerIds=[...new Set((body.dealerIds || []).map(String))].filter((id)=>allowed.has(id));
+      const settings={reminderText:String(body.reminderText || "").trim(),signature:String(body.signature || "").trim()};
+      if (!settings.reminderText || !settings.signature) throw Object.assign(new Error("Testo e firma sono obbligatori"),{status:422});
+      const upsert=database.prepare("INSERT INTO operational_settings(setting_key,setting_value,updated_at) VALUES(?,?,CURRENT_TIMESTAMP) ON CONFLICT(setting_key) DO UPDATE SET setting_value=excluded.setting_value,updated_at=CURRENT_TIMESTAMP");upsert.run("reminder_text",settings.reminderText);upsert.run("communication_signature",settings.signature);
+      database.prepare("INSERT INTO audit_events(campaign_id,event_type,actor,payload) VALUES(?,?,?,?)").run(campaignId,"communications_prepared","JET Admin",JSON.stringify({dealerIds,type:body.type === "initial"?"initial":"reminder",sent:false,...settings}));
+      return json(response,200,{ok:true,prepared:dealerIds.length,sent:false,message:"Comunicazioni preparate e registrate; nessuna email è stata inviata."});
+    }
   }
   if (request.method === "POST" && path === "/api/integrations/jotform/sync") {
     requireJet(request);
@@ -710,15 +861,18 @@ export async function handleApi(request, response, url, database = db) {
     return response.end(`\ufeff${csv}`);
   }
   if (request.method === "GET" && path === "/api/dealers/template.csv") {
-    const template = "dealer_id,name,region,area,manager,email\nDEMO-100,Concessionario Esempio Demo,Lombardia,Nord Ovest,Giulia Ferri Demo,demo-100@demo.sdf.invalid\n";
+    const template = "dealer_id,name,region,area,manager,contact_name,email\nDEMO-100,Concessionario Esempio Demo,Lombardia,Nord Ovest,Giulia Ferri Demo,Mario Rossi,demo-100@demo.sdf.invalid\n";
     response.writeHead(200,{ "content-type":"text/csv; charset=utf-8", "content-disposition":"attachment; filename=template-concessionari.csv" });
     return response.end(`\ufeff${template}`);
+  }
+  if (request.method === "POST" && path === "/api/dealers/import/preview") {
+    requireJet(request); const body=await parseBody(request); return json(response,200,importPreview(database,body.dealers));
   }
   if (request.method === "POST" && path === "/api/dealers/import") {
     requireJet(request);
     const body = await parseBody(request);
-    if (!Array.isArray(body.dealers) || !body.dealers.length || body.dealers.length > 500) throw Object.assign(new Error("Il file deve contenere da 1 a 500 concessionari"),{ status:422 });
-    const upsert = database.prepare(`INSERT INTO dealers(id,name,initials,region,area,manager,email,access_token) VALUES(?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name,initials=excluded.initials,region=excluded.region,area=excluded.area,manager=excluded.manager,email=excluded.email,active=1`);
+    const preview=importPreview(database,body.dealers); if(preview.errors) throw Object.assign(new Error("Correggere gli errori prima dell'importazione"),{status:422,details:{preview}});
+    const upsert = database.prepare(`INSERT INTO dealers(id,name,initials,region,area,manager,contact_name,email,access_token) VALUES(?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name,initials=excluded.initials,region=excluded.region,area=excluded.area,manager=excluded.manager,contact_name=excluded.contact_name,email=excluded.email,active=1`);
     database.exec("BEGIN");
     try {
       body.dealers.forEach((item,index) => {
@@ -729,14 +883,35 @@ export async function handleApi(request, response, url, database = db) {
         const manager = String(item.manager || "").trim();
         if (!id || !name || !region || !area || !manager) throw Object.assign(new Error(`Riga ${index+2}: campi obbligatori mancanti`),{ status:422 });
         const initials = name.split(/\s+/).filter(Boolean).slice(0,2).map((part) => part[0]).join("").toUpperCase();
-        upsert.run(id,name,initials,region,area,manager,String(item.email || "").trim(),randomBytes(18).toString("hex"));
+        upsert.run(id,name,initials,region,area,manager,String(item.contact_name || "").trim(),String(item.email || "").trim(),randomBytes(18).toString("hex"));
+        associateDealerWithOpenCampaigns(database,id);
       });
       database.prepare("INSERT INTO audit_events(event_type,actor,payload) VALUES(?,?,?)").run("dealers_imported","JET Admin",JSON.stringify({ count:body.dealers.length }));
       database.exec("COMMIT");
     } catch (error) { database.exec("ROLLBACK"); throw error; }
+    ensureCampaignLinks(database);
     return json(response,200,{ ok:true,count:body.dealers.length });
   }
   const dealerMatch = path.match(/^\/api\/dealers\/([^/]+)$/);
+  if (request.method === "POST" && path === "/api/dealers") {
+    requireJet(request); const body=await parseBody(request); const values=validateDealerInput(body);
+    if(database.prepare("SELECT 1 FROM dealers WHERE id=?").get(values.id)) throw Object.assign(new Error("Dealer ID già presente"),{status:409});
+    database.prepare("INSERT INTO dealers(id,name,initials,region,area,manager,contact_name,email,access_token) VALUES(?,?,?,?,?,?,?,?,?)").run(values.id,values.name,initialsFor(values.name),values.region,values.area,values.manager,values.contact_name,values.email,randomBytes(32).toString("hex"));
+    associateDealerWithOpenCampaigns(database,values.id); ensureCampaignLinks(database);
+    database.prepare("INSERT INTO audit_events(dealer_id,event_type,actor,payload) VALUES(?,?,?,?)").run(values.id,"dealer_created","JET Admin",JSON.stringify(values));
+    return json(response,201,{ok:true,id:values.id});
+  }
+  if (request.method === "PUT" && dealerMatch) {
+    requireJet(request); const oldId=decodeURIComponent(dealerMatch[1]); const current=database.prepare("SELECT * FROM dealers WHERE id=?").get(oldId); if(!current)throw Object.assign(new Error("Concessionario non trovato"),{status:404});
+    const body=await parseBody(request); const values=validateDealerInput({...current,...body,id:body.id || oldId}); const active=body.active === undefined ? current.active : body.active ? 1 : 0;
+    if(values.id!==oldId && database.prepare("SELECT 1 FROM dealers WHERE id=?").get(values.id))throw Object.assign(new Error("Il nuovo Dealer ID è già utilizzato"),{status:409});
+    database.exec("BEGIN");
+    try {
+      if(values.id!==oldId){database.prepare("INSERT INTO dealers(id,name,initials,region,area,manager,contact_name,email,active,access_token,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)").run(values.id,values.name,initialsFor(values.name),values.region,values.area,values.manager,values.contact_name,values.email,active,randomBytes(32).toString("hex"),current.created_at);for(const table of ["campaign_dealers","submissions","dealer_campaign_links","jotform_submissions","notes","audit_events"])database.prepare(`UPDATE ${table} SET dealer_id=? WHERE dealer_id=?`).run(values.id,oldId);database.prepare("DELETE FROM dealers WHERE id=?").run(oldId);}else database.prepare("UPDATE dealers SET name=?,initials=?,region=?,area=?,manager=?,contact_name=?,email=?,active=? WHERE id=?").run(values.name,initialsFor(values.name),values.region,values.area,values.manager,values.contact_name,values.email,active,oldId);
+      database.prepare("INSERT INTO audit_events(dealer_id,event_type,actor,payload) VALUES(?,?,?,?)").run(values.id,active?"dealer_updated":"dealer_deactivated","JET Admin",JSON.stringify({previous:{id:oldId,name:current.name,email:current.email,active:current.active},next:{...values,active}}));database.exec("COMMIT");
+    }catch(error){database.exec("ROLLBACK");throw error;}
+    return json(response,200,{ok:true,id:values.id,active:Boolean(active)});
+  }
   if (request.method === "GET" && dealerMatch) return json(response,200,dealerDetail(database,decodeURIComponent(dealerMatch[1]),url.searchParams.get("campaignId"),request));
   const linkMatch = path.match(/^\/api\/dealers\/([^/]+)\/collection-link(?:\/(regenerate|revoke))?$/);
   if (linkMatch) {
