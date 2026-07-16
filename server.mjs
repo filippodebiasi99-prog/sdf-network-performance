@@ -778,10 +778,12 @@ export async function handleApi(request, response, url, database = db) {
 }
 
 const contentTypes = { ".html":"text/html; charset=utf-8", ".css":"text/css; charset=utf-8", ".js":"text/javascript; charset=utf-8", ".svg":"image/svg+xml", ".png":"image/png", ".md":"text/markdown; charset=utf-8" };
+const publicAssets = new Set(["index.html","styles.css","app.js","portal.js"]);
 
 function serveStatic(response, pathname) {
   const requested = pathname === "/" || pathname.startsWith("/compila/") ? "index.html" : pathname.slice(1);
   const safePath = normalize(requested).replace(/^(\.\.(\/|\\|$))+/, "");
+  if (!publicAssets.has(safePath)) return json(response,404,{ error:"File non trovato" });
   const filePath = join(ROOT,safePath);
   if (!filePath.startsWith(ROOT) || !existsSync(filePath)) return json(response,404,{ error:"File non trovato" });
   response.writeHead(200,{ "content-type":contentTypes[extname(filePath)] || "application/octet-stream", "cache-control":"no-cache", "x-content-type-options":"nosniff", "referrer-policy":"strict-origin-when-cross-origin", "content-security-policy":"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; frame-src https://form.jotform.com https://www.jotform.com" });

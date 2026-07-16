@@ -45,6 +45,13 @@ test("frontend assets are served with the correct content types", async () => {
   }
 });
 
+test("private project files are never served as static assets", async () => {
+  for (const privatePath of ["/data/sdf-kpi.sqlite","/data/sdf-kpi.sqlite-wal","/server.mjs","/README.md"]) {
+    const response = await fetch(`${baseUrl}${privatePath}`);
+    assert.equal(response.status,404,privatePath);
+  }
+});
+
 test("dealer filters and details return stored values", async () => {
   const result = await fetch(`${baseUrl}/api/dealers?region=Veneto&status=NOT_STARTED`).then((response) => response.json());
   assert.equal(result.dealers.length, 1);
