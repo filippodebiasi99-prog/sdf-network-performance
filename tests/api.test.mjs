@@ -29,6 +29,12 @@ test("health and overview are calculated from SQLite", async () => {
   const overview = await fetch(`${baseUrl}/api/overview`).then((response) => response.json());
   assert.deepEqual(overview.totals, { dealers:64,received:48,completed:48,submitted:12,validated:32,drafts:6,reopened:0,notStarted:10,missing:16,verify:4,completion:75 });
   assert.ok(overview.timeline.length > 0);
+  assert.equal(overview.performance.sample,48);
+  assert.equal(overview.performance.metrics.length,5);
+  assert.equal(overview.performance.leaders.length,5);
+  assert.equal(overview.performance.leaders[0].name,"AgriLinea Demo");
+  assert.ok(overview.performance.metrics.every((metric) => Number.isFinite(metric.value)));
+  assert.equal(overview.performance.areas.length,4);
 });
 
 test("frontend assets are served with the correct content types", async () => {

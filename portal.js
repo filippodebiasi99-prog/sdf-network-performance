@@ -66,6 +66,32 @@
     return `${number.toLocaleString("it-IT", { maximumFractionDigits:1 })} ${kpi.unit || ""}`.trim();
   }
 
+  function formatPerformanceValue(metric, value = metric?.value) {
+    const number=Number(value);
+    if (!Number.isFinite(number)) return "—";
+    if (metric?.kind === "currency") {
+      if (Math.abs(number) >= 1_000_000) return `€ ${(number/1_000_000).toLocaleString("it-IT",{maximumFractionDigits:1})} mln`;
+      return `€ ${number.toLocaleString("it-IT",{maximumFractionDigits:0})}`;
+    }
+    if (metric?.kind === "score") return `${number.toLocaleString("it-IT",{maximumFractionDigits:1})} / 10`;
+    return number.toLocaleString("it-IT",{maximumFractionDigits:0});
+  }
+
+  function overviewBusinessMetrics(performance) {
+    const descriptions={ revenue_total:"Fatturato complessivo",units_sold:"Macchine vendute",parts_revenue:"Ricavi ricambi",service_revenue:"Ricavi assistenza",customer_satisfaction:"Soddisfazione media" };
+    return `<div class="business-metrics" aria-label="Performance della rete">${performance.metrics.map((metric) => `<article class="business-metric"><span>${descriptions[metric.code] || escapeHtml(metric.name)}</span><strong>${formatPerformanceValue(metric)}</strong><small>${metric.code === "customer_satisfaction" ? `${metric.count} concessionari nel campione` : `Media dealer ${formatPerformanceValue(metric,metric.average)}`}</small></article>`).join("")}</div>`;
+  }
+
+  function overviewRevenueLeaders(performance) {
+    const maximum=Math.max(1,...performance.leaders.map((item)=>item.value));
+    return `<ol class="ranking-list">${performance.leaders.map((item) => `<li><span class="ranking-position">${item.position}</span><button class="ranking-dealer" data-dealer-id="${escapeHtml(item.id)}"><strong>${escapeHtml(item.name)}</strong><small>${escapeHtml(item.region)} · ${escapeHtml(item.id)}</small></button><div class="ranking-value"><strong>${formatPerformanceValue({kind:"currency"},item.value)}</strong><small>${item.deltaFromAverage >= 0 ? "+" : ""}${item.deltaFromAverage.toLocaleString("it-IT",{maximumFractionDigits:1})}% vs media</small></div><span class="ranking-bar"><i style="width:${Math.max(8,item.value/maximum*100)}%"></i></span></li>`).join("")}</ol>`;
+  }
+
+  function overviewAreaPerformance(performance) {
+    const maximum=Math.max(1,...performance.areas.map((item)=>item.average));
+    return `<div class="area-performance">${performance.areas.map((item,index) => `<div class="area-performance-row"><div><strong>${escapeHtml(item.area)}</strong><small>${item.count} dealer</small></div><span class="area-performance-track"><i style="width:${Math.max(8,item.average/maximum*100)}%"></i></span><strong>${formatPerformanceValue({kind:"currency"},item.average)}</strong><em>${index+1}</em></div>`).join("")}</div>`;
+  }
+
   function portalAreaStatus() {
     const areas = state.overview?.areas || [];
     return `<div class="stack-list">${areas.map((area) => {
@@ -112,18 +138,14 @@
 
   function portalOverviewPage() {
     if (!state.online || !state.overview) return originalOverviewPage();
-    const { campaign, totals, recent, alerts } = state.overview;
-    return `<section class="page" aria-labelledby="page-title">
-      ${pageHeader({ eyebrow:"Monitoraggio rete", title:'<span id="page-title">Overview</span>', subtitle:"Stato della raccolta dati e principali indicatori della rete.", actions:`<select class="select-compact" aria-label="Seleziona rilevazione">${state.config.campaigns.map((item) => `<option value="${item.id}" ${item.id === campaign.id ? "selected" : ""}>${item.name}</option>`).join("")}</select><button class="button primary" data-export-csv>${icon("download")}Esporta report</button>` })}
-      <div class="metrics" aria-label="Indicatori principali">
-        <article class="metric"><div class="metric-head"><span>Concessionari totali</span><span class="metric-icon">${icon("users")}</span></div><div class="metric-value">${totals.dealers}</div><div class="metric-foot">${state.overview.areas.length} aree geografiche</div></article>
-        <article class="metric"><div class="metric-head"><span>Compilazioni ricevute</span><span class="metric-icon">${icon("check")}</span></div><div class="metric-value">${totals.received}</div><div class="metric-foot"><span class="trend-up">${totals.validated}</span> validate · ${totals.submitted} inviate</div></article>
-        <article class="metric"><div class="metric-head"><span>Completamento</span><span class="metric-icon">${icon("analysis")}</span></div><div class="metric-value">${totals.completion}%</div><div class="metric-foot">Campagna in corso</div></article>
-        <article class="metric"><div class="metric-head"><span>Compilazioni mancanti</span><span class="metric-icon warn">${icon("clock")}</span></div><div class="metric-value">${totals.missing}</div><div class="metric-foot">Chiusura ${new Intl.DateTimeFormat("it-IT",{day:"2-digit",month:"short"}).format(new Date(campaign.close_date))}</div></article>
-        <article class="metric"><div class="metric-head"><span>Dati da verificare</span><span class="metric-icon warn">${icon("alert")}</span></div><div class="metric-value">${totals.verify}</div><div class="metric-foot">Controllo operativo JET</div></article>
-      </div>
-      <div class="content-grid"><article class="panel"><div class="panel-header"><div><h2>Andamento delle compilazioni</h2><p>Invii cumulativi della campagna corrente</p></div><div class="chart-legend"><span class="legend-item"><i class="legend-line"></i>${campaign.year}</span></div></div><div class="panel-body">${portalSubmissionChart()}</div></article><article class="panel"><div class="panel-header"><div><h2>Stato per area</h2><p>Distribuzione delle rilevazioni</p></div><button class="text-button" data-page-link="dealers">Vedi rete →</button></div><div class="panel-body">${portalAreaStatus()}</div></article></div>
-      <div class="content-grid equal"><article class="panel"><div class="panel-header"><div><h2>Ultime compilazioni ricevute</h2><p>Aggiornamenti più recenti della rete</p></div><button class="text-button" data-page-link="dealers">Tutte →</button></div><div class="panel-body"><ul class="activity-list">${recent.map((item,index) => `<li class="activity-item"><span class="initials">${item.initials}</span><span><strong>${item.name}</strong><small>${item.region} · ${item.id}</small></span><time class="activity-time">${index === 0 ? "Più recente" : "Ricevuta"}</time></li>`).join("")}</ul></div></article><article class="panel"><div class="panel-header"><div><h2>Richiedono attenzione</h2><p>Bozze, anomalie e rilevazioni mancanti</p></div><button class="text-button" data-page-link="dealers">Gestisci →</button></div><div class="panel-body"><ul class="alert-list">${alerts.slice(0,4).map((item) => `<li class="alert-item"><span class="alert-symbol">${icon(item.collection_status === "NOT_STARTED" ? "clock" : "alert")}</span><span><strong>${item.name}</strong><small>${item.collection_status === "NOT_STARTED" ? "Rilevazione non ricevuta" : item.collection_status === "DRAFT" ? "Bozza in corso" : "Dati da verificare"}</small></span>${collectionStatusBadge(item.collection_status)}</li>`).join("")}</ul></div></article></div>
+    const { campaign, totals, recent, alerts,performance } = state.overview;
+    return `<section class="page overview-page" aria-labelledby="page-title">
+      ${pageHeader({ eyebrow:"Rete concessionari", title:'<span id="page-title">Overview</span>', subtitle:`Performance e stato della rete · ${performance.sample} concessionari nel campione`, actions:`<select class="select-compact" aria-label="Seleziona rilevazione">${state.config.campaigns.map((item) => `<option value="${item.id}" ${item.id === campaign.id ? "selected" : ""}>${item.name}</option>`).join("")}</select><button class="button" data-export-csv>${icon("download")}Esporta dati</button>` })}
+      ${overviewBusinessMetrics(performance)}
+      <div class="overview-analysis-grid"><article class="panel"><div class="panel-header"><div><h2>Dealer per fatturato</h2><p>Primi cinque concessionari · confronto con la media rete</p></div><button class="text-button" data-page-link="analysis">Analisi completa →</button></div><div class="panel-body">${overviewRevenueLeaders(performance)}</div></article><article class="panel"><div class="panel-header"><div><h2>Fatturato medio per area</h2><p>Benchmark relativo sui dati ricevuti</p></div><button class="text-button" data-page-link="analysis">Confronta →</button></div><div class="panel-body">${overviewAreaPerformance(performance)}</div></article></div>
+      <div class="overview-section-heading"><div><p class="eyebrow">Raccolta dati</p><h2>Avanzamento della rilevazione</h2><p>Stato operativo della campagna e concessionari da seguire.</p></div><button class="text-button" data-page-link="dealers">Gestisci concessionari →</button></div>
+      <div class="collection-metrics" aria-label="Stato della raccolta"><div><span>Rete totale</span><strong>${totals.dealers}</strong><small>${state.overview.areas.length} aree</small></div><div><span>Ricevute</span><strong>${totals.received}</strong><small>${totals.completion}% della rete</small></div><div><span>Validate</span><strong>${totals.validated}</strong><small>Controllo completato</small></div><div><span>Bozze</span><strong>${totals.drafts}</strong><small>Compilazioni in corso</small></div><div><span>Mancanti</span><strong>${totals.missing}</strong><small>Entro ${new Intl.DateTimeFormat("it-IT",{day:"2-digit",month:"short"}).format(new Date(campaign.close_date))}</small></div><div><span>Da verificare</span><strong>${totals.verify}</strong><small>Richiedono controllo JET</small></div></div>
+      <div class="content-grid equal overview-operations"><article class="panel"><div class="panel-header"><div><h2>Da completare o verificare</h2><p>Priorità operative della campagna</p></div><button class="text-button" data-page-link="dealers">Vedi tutti →</button></div><div class="panel-body"><ul class="alert-list">${alerts.slice(0,5).map((item) => `<li class="alert-item"><span class="alert-symbol">${icon(item.collection_status === "NOT_STARTED" ? "clock" : "alert")}</span><span><strong>${item.name}</strong><small>${item.collection_status === "NOT_STARTED" ? "Rilevazione non iniziata" : item.collection_status === "DRAFT" ? `Bozza al ${Math.round(item.completion || item.quality || 0)}%` : "Dati da verificare"}</small></span>${collectionStatusBadge(item.collection_status)}</li>`).join("")}</ul></div></article><article class="panel"><div class="panel-header"><div><h2>Ultimi dati ricevuti</h2><p>Aggiornamenti più recenti della rete</p></div><button class="text-button" data-page-link="dealers">Apri rete →</button></div><div class="panel-body"><ul class="activity-list">${recent.map((item,index) => `<li class="activity-item"><span class="initials">${item.initials}</span><span><strong>${item.name}</strong><small>${item.region} · ${item.id}</small></span><time class="activity-time">${index === 0 ? "Più recente" : formatDate(item.updated_at)}</time></li>`).join("")}</ul></div></article></div>
     </section>`;
   }
 

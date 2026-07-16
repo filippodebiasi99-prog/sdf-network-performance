@@ -389,11 +389,42 @@ function overviewPayload(database, campaignId) {
   const daily = database.prepare("SELECT substr(updated_at,1,10) AS day, COUNT(*) AS count FROM submissions WHERE campaign_id=? AND status IN ('submitted','verify') GROUP BY substr(updated_at,1,10) ORDER BY day").all(campaign.id);
   let cumulative = 0;
   const timeline = daily.map((item) => ({ day:item.day, value:(cumulative += item.count) }));
+  const performanceRows = database.prepare(`
+    SELECT d.id,d.name AS dealer_name,d.initials,d.region,d.area,k.code,k.name AS kpi_name,k.unit,k.kind,v.value
+    FROM kpi_values v
+    JOIN kpi_definitions k ON k.id=v.kpi_id
+    JOIN submissions s ON s.id=v.submission_id
+    JOIN dealers d ON d.id=s.dealer_id
+    WHERE s.campaign_id=? AND s.status IN ('submitted','verify') AND k.active=1
+  `).all(campaign.id);
+  const metricSummary = (code, aggregation = "total") => {
+    const values = performanceRows.filter((row) => row.code === code && Number.isFinite(row.value));
+    const definition = values[0] || database.prepare("SELECT code,name,unit,kind FROM kpi_definitions WHERE code=? AND active=1").get(code);
+    const total = values.reduce((sum,row) => sum + row.value,0);
+    return { code,name:definition?.kpi_name || definition?.name || code,unit:definition?.unit || "",kind:definition?.kind || "number",value:aggregation === "average" ? (values.length ? total / values.length : null) : total,average:values.length ? total / values.length : null,count:values.length };
+  };
+  const revenueRows = performanceRows.filter((row) => row.code === "revenue_total" && Number.isFinite(row.value));
+  const revenueAverage = revenueRows.length ? revenueRows.reduce((sum,row) => sum + row.value,0) / revenueRows.length : null;
+  const performance = {
+    metrics:[
+      metricSummary("revenue_total"),
+      metricSummary("units_sold"),
+      metricSummary("parts_revenue"),
+      metricSummary("service_revenue"),
+      metricSummary("customer_satisfaction","average")
+    ],
+    leaders:[...revenueRows].sort((a,b) => b.value-a.value).slice(0,5).map((row,index) => ({ id:row.id,name:row.dealer_name,initials:row.initials,region:row.region,area:row.area,value:row.value,position:index+1,deltaFromAverage:revenueAverage ? (row.value-revenueAverage)/revenueAverage*100 : null })),
+    areas:[...new Set(revenueRows.map((row) => row.area))].map((area) => {
+      const scoped=revenueRows.filter((row) => row.area === area);
+      return { area,count:scoped.length,average:scoped.reduce((sum,row) => sum+row.value,0)/scoped.length };
+    }).sort((a,b) => b.average-a.average),
+    sample:revenueRows.length
+  };
   const alertOrder={NEEDS_REVIEW:0,DRAFT:1,REOPENED:1,NOT_STARTED:2};
   return {
     campaign,
     totals: { dealers: rows.length, received, completed, submitted,validated,drafts,reopened,notStarted,missing: rows.length - received, verify, completion: rows.length ? Math.round(received / rows.length * 100) : 0 },
-    areas, timeline,
+    areas, timeline,performance,
     recent: rows.filter((row) => ["SUBMITTED","VALIDATED","NEEDS_REVIEW"].includes(row.collection_status)).sort((a,b) => String(b.updated_at).localeCompare(String(a.updated_at))).slice(0,4),
     alerts: rows.filter((row) => ["NEEDS_REVIEW","DRAFT","REOPENED","NOT_STARTED"].includes(row.collection_status)).sort((a,b) => alertOrder[a.collection_status]-alertOrder[b.collection_status]).slice(0,5),
     syncErrors: COLLECTION_MODE === "jotform" ? database.prepare("SELECT COUNT(*) AS count FROM jotform_submissions WHERE campaign_id=? AND sync_status='ERROR'").get(campaign.id).count : 0
