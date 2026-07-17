@@ -6,7 +6,7 @@
     <meta name="description" content="Preview del portale SDF per il monitoraggio dei KPI della rete concessionari." />
     <title>SDF Network Performance</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='8' fill='%23da8d1b'/%3E%3Cpath d='M16 19h32v8H25v5h20v8H25v5h23v8H16z' fill='%23fff'/%3E%3C/svg%3E" />
-    <link rel="stylesheet" href="/styles.css?v=11" />
+    <link rel="stylesheet" href="/styles.css?v=12" />
   </head>
   <body>
     <a class="skip-link" href="#main-content">Vai al contenuto</a>
@@ -44,10 +44,10 @@
 
       <div class="app-main">
         <header class="topbar">
-          <button class="icon-button menu-button" id="menu-button" aria-label="Apri menu" aria-expanded="false" aria-controls="sidebar"><span data-icon="menu"></span></button>
+          <button class="icon-button menu-button" id="menu-button" aria-label="Apri menu" aria-expanded="false" aria-controls="sidebar"><span data-icon="headerMenu"></span></button>
           <div class="topbar-context"><span>Portale KPI rete concessionari</span><strong id="mobile-page-title">Overview</strong></div>
           <button class="topbar-command" type="button" data-global-action="search" aria-haspopup="dialog" aria-controls="global-search-dialog">
-            <span data-icon="search"></span>
+            <span data-icon="headerSearch"></span>
             <span>Cerca concessionario, KPI o report</span>
             <kbd>⌘ K</kbd>
           </button>
@@ -55,8 +55,8 @@
             <label class="demo-role-control" id="demo-role-control">Vista demo
               <select id="demo-role-select" aria-label="Seleziona vista demo"><option value="JET">Vista JET</option><option value="SDF">Vista SDF</option></select>
             </label>
-            <button class="icon-button" aria-label="Notifiche"><span data-icon="bell"></span><span class="notification-dot"></span></button>
-            <button class="icon-button" id="help-center-button" aria-label="Apri Centro assistenza"><span data-icon="help"></span></button>
+            <button class="icon-button" aria-label="Notifiche"><span data-icon="headerBell"></span><span class="notification-dot"></span></button>
+            <button class="icon-button" id="help-center-button" aria-label="Apri Centro assistenza"><span data-icon="headerHelp"></span></button>
             <button class="topbar-user" type="button"><span class="avatar">D</span><span><strong>Daniele</strong><small>JET Admin</small></span></button>
           </div>
         </header>
@@ -76,7 +76,7 @@
       <div class="global-search-results" id="global-search-results" role="listbox" aria-live="polite"></div>
       <footer class="global-search-footer"><span><kbd>↑</kbd><kbd>↓</kbd> per navigare</span><span><kbd>Invio</kbd> per aprire</span></footer>
     </dialog>
-    <script src="/app.js?v=3"></script>
+    <script src="/app.js?v=4"></script>
     <script src="/portal.js?v=5"></script>
   </body>
 </html>
