@@ -49,9 +49,13 @@ Non servono credenziali Jotform. Il selettore “Vista JET / Vista SDF” è dim
 
 ## Questionario e KPI
 
-La fonte unica è [`config/kpi-questionnaire.js`](config/kpi-questionnaire.js). Definisce 20 campi dimostrativi, metadati, sezioni, limiti, decimali, ordine e versione `demo-v1`. La stessa configurazione alimenta UI, validazione client/server, dettaglio dealer, Analisi KPI ed export.
+La fonte unica è [`config/kpi-questionnaire.js`](config/kpi-questionnaire.js). La versione `sdf-client-v1` definisce i 15 valori economici e operativi richiesti dal cliente, organizzati in tre sezioni. Codice, nome, regione, area e area manager provengono invece dall'anagrafica concessionario: il questionario li mostra come dati precompilati, senza richiederne la digitazione.
 
-Sono calcolati otto KPI derivati documentati nel modulo: totale unità, conversione preventivi, raggiungimento target fatturato/ricambi, utilizzo ed efficienza officina, ricavo per unità e per ordine di lavoro. Con denominatore zero o dati mancanti il risultato non viene salvato: niente `NaN` o `Infinity`; la UI mostra “Non calcolabile”.
+I campi riferiti all'esercizio mostrano automaticamente l'anno precedente a quello della rilevazione: per “Rilevazione 1 — 2026” viene quindi visualizzato il 2025. La stessa configurazione alimenta UI, validazione client/server, dettaglio dealer, Analisi KPI, Jotform opzionale ed export.
+
+Questa versione non calcola KPI derivati: formule per marginalità e costo medio saranno introdotte solo dopo la definizione contabile con il cliente. Nell’Overview la marginalità media ricambi è quindi indicata come formula da confermare, mentre l’indice di rotazione usa il valore dichiarato. Sono già attivi controlli di coerenza tra fatturato ricambi totale/SDF, vendite esterne, ore di presenza, lavorate e vendute.
+
+L’identità visiva segue `160401_SDF_GUIDELINE_ENG.pdf`: logo ufficiale, arancio RGB 218/141/27, Cool Grey 10 RGB 135/136/137 e Tahoma come carattere per i documenti digitali.
 
 Il dealer può salvare manualmente o con autosalvataggio debounced (1,8 secondi), riaprire la bozza dallo stesso link, rivedere un riepilogo e inviare. Dopo l'invio il form è bloccato; JET può impostare `NEEDS_REVIEW`, `VALIDATED` o `REOPENED`. Gli stati gestiti sono `NOT_STARTED`, `DRAFT`, `SUBMITTED`, `NEEDS_REVIEW`, `VALIDATED`, `REOPENED`.
 
@@ -79,7 +83,7 @@ Gli endpoint legacy `/api/survey/:token` e il modulo Jotform restano disponibili
 
 ## Migrazione database
 
-L'avvio aggiunge in modo non distruttivo metadati del questionario alle definizioni KPI e `questionnaire_version`, issue e revisione alle submission. Aggiunge inoltre `campaign_dealers` per le associazioni esplicite, referente e stato anagrafico, metadati di archiviazione e `operational_settings` per testo reminder e firma. I KPI legacy sono conservati ma marcati inattivi; i dati demo compatibili vengono migrati e completati per `demo-v1`. Non vengono eliminate compilazioni, note o audit esistenti.
+L'avvio aggiunge in modo non distruttivo metadati del questionario alle definizioni KPI e `questionnaire_version`, issue e revisione alle submission. Aggiunge inoltre `campaign_dealers` per le associazioni esplicite, referente e stato anagrafico, metadati di archiviazione e `operational_settings` per testo reminder e firma. Le definizioni delle versioni precedenti sono conservate ma marcate inattive; soltanto le submission demo vengono riallineate automaticamente a `sdf-client-v1`. Le compilazioni reali precedenti mantengono la propria versione e non vengono reinterpretate o cancellate.
 
 La matrice completa delle operazioni autonome è in [`docs/autonomy-audit.md`](docs/autonomy-audit.md).
 
@@ -87,7 +91,7 @@ Decisioni: [ADR-001](docs/decisions/ADR-001-local-mvp-stack.md), [ADR-002](docs/
 
 ## Limiti
 
-- I 20 KPI e le formule sono dimostrativi e devono essere definiti con il cliente.
+- I 15 campi riflettono la lista cliente dichiarata definitiva al 90%; formule e definizioni contabili restano da confermare.
 - Le rilevazioni sono una o due campagne annuali, non raccolte giornaliere o mensili.
 - Reminder preparati e auditati, ma nessuna email viene realmente spedita.
 - Il selettore ruoli non è autenticazione; mancano login, SSO e autorizzazioni production-grade.

@@ -32,7 +32,7 @@ function tokenFor(dealerId,campaignId="campaign-2026-1") {
 function submissionFixture(id,dealerId,token,campaignId="campaign-2026-1",changes={}) {
   const answers = {
     a1:{ name:"dealerId",answer:dealerId },a2:{ name:"dealerName",answer:"Dealer Test" },a3:{ name:"campaignId",answer:campaignId },a4:{ name:"campaignName",answer:"Rilevazione 1 — 2026" },a5:{ name:"dealerToken",answer:token },a6:{ name:"periodStart",answer:"2026-06-01" },a7:{ name:"periodEnd",answer:"2026-07-31" },
-    k1:{ name:"revenueTotal",answer:"5,25" },k2:{ name:"operatingMargin",answer:"18.4" },k3:{ name:"unitsSold",answer:"91" },k4:{ name:"partsRevenueShare",answer:"21" },k5:{ name:"activeCustomers",answer:"440" },k6:{ name:"quotesConversion",answer:"31" },k7:{ name:"responseHours",answer:"6.2" },k8:{ name:"customerSatisfaction",answer:"8.7" },k9:{ name:"serviceRevenueShare",answer:"14" },k10:{ name:"annualGrowth",answer:"7.5" }
+    k1:{ name:"companyRevenueTotal",answer:"5.250.000,00" },k2:{ name:"partsRevenueTotal",answer:"1200000" },k3:{ name:"sdfPartsRevenueTotal",answer:"780000" },k4:{ name:"partsAverageCost",answer:"95.4" },k5:{ name:"sdfPartsAverageCost",answer:"88.1" },k6:{ name:"externalPartsRevenueTotal",answer:"650000" },k7:{ name:"externalSdfPartsRevenueTotal",answer:"420000" },k8:{ name:"inventoryEndValue",answer:"400000" },k9:{ name:"urgentPartsOrdersPct",answer:"12.5" },k10:{ name:"workshopLaborRate",answer:"65" },k11:{ name:"fieldLaborRate",answer:"82" },k12:{ name:"inventoryTurnover",answer:"3,4" },k13:{ name:"technicianPresenceHours",answer:"12.000" },k14:{ name:"workshopWorkedHoursTotal",answer:"9000" },k15:{ name:"customerSoldHoursTotal",answer:"8500" }
   };
   return { id,form_id:"FORM-123",created_at:"2026-07-15 10:00:00",updated_at:"2026-07-15 10:00:00",answers,...changes };
 }
@@ -77,7 +77,7 @@ test("Jotform embed URL uses the central hidden-field mapping",() => {
 test("KPI mapping accepts Italian decimal text",() => {
   const definitions=database.prepare("SELECT * FROM kpi_definitions").all(); const {token}=tokenFor("DEMO-004");
   const mapped=mapSubmissionToKpis(submissionFixture("MAP-1","DEMO-004",token),definitions,getJotformConfig());
-  assert.equal(mapped.values.find((item)=>item.code==="revenue").value,5.25); assert.equal(mapped.issues.length,0);
+  assert.equal(mapped.values.find((item)=>item.code==="company_revenue_total").value,5_250_000); assert.equal(mapped.values.find((item)=>item.code==="inventory_turnover").value,3.4); assert.equal(mapped.issues.length,0);
 });
 
 test("webhook rejects a wrong secret",async () => {

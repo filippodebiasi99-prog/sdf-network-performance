@@ -11,7 +11,7 @@ const {createAppServer,initializeDatabase}=await import(`../server.mjs?autonomy=
 const database=new DatabaseSync(":memory:");initializeDatabase(database);
 const server=createAppServer(database);let baseUrl;
 const call=(path,options={})=>fetch(`${baseUrl}${path}`,{...options,headers:{"content-type":"application/json","x-demo-role":"JET",...(options.headers||{})}});
-const values=(offset=0)=>Object.fromEntries(questionnaireFields.map((field,index)=>[field.code,field.code==="customer_satisfaction"?8.2:field.type==="integer"?30+index+offset:2000+index*10+offset]));
+const values=(offset=0)=>Object.fromEntries(questionnaireFields.map((field,index)=>[field.code,field.type==="percentage"?12.5:2000+index*10+offset]));
 
 before(async()=>{await new Promise((resolve,reject)=>{server.once("error",reject);server.listen(0,"127.0.0.1",resolve)});baseUrl=`http://127.0.0.1:${server.address().port}`});
 after(async()=>{await new Promise(resolve=>server.close(resolve));database.close()});
@@ -33,7 +33,7 @@ test("JET completes the normal operational workflow without scripts, seed or dep
   const link=await call("/api/dealers/AUTO-001/collection-link?campaignId=autonomy-2027-1").then(result=>result.json());assert.match(link.url,/\/compila\//);assert.ok(link.qrUrl);
   const token=new URL(link.url).pathname.split("/").pop();
   response=await call(`/api/compila/${token}`);assert.equal(response.status,200);
-  response=await call(`/api/compila/${token}/draft`,{method:"PUT",body:JSON.stringify({values:{revenue_total:"1.234,50",units_sold:40}})});assert.equal(response.status,200);assert.equal((await response.json()).submission.collection_status,"DRAFT");
+  response=await call(`/api/compila/${token}/draft`,{method:"PUT",body:JSON.stringify({values:{company_revenue_total:"1.234,50",inventory_turnover:"3,4"}})});assert.equal(response.status,200);assert.equal((await response.json()).submission.collection_status,"DRAFT");
   response=await call(`/api/compila/${token}/submit`,{method:"POST",body:JSON.stringify({values:values()})});assert.equal(response.status,200);
   const submissionId=database.prepare("SELECT id FROM submissions WHERE dealer_id='AUTO-001' AND campaign_id='autonomy-2027-1'").get().id;
 

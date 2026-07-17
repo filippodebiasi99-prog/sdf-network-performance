@@ -24,8 +24,8 @@ test("curated dealers have complete, draft and missing database records",()=>{
     {id:"DEMO-001",name:"AgriNord Demo",status:"VALIDATED"},{id:"DEMO-002",name:"TerraMotori Demo",status:"SUBMITTED"},
     {id:"DEMO-003",name:"CampoTech Demo",status:"DRAFT"},{id:"DEMO-004",name:"Meccanica Verde Demo",status:"NOT_STARTED"}
   ]);
-  assert.equal(rows[0].values_count,28); assert.equal(rows[1].values_count,28);
-  assert.ok(rows[2].values_count>=12 && rows[2].values_count<28); assert.ok(rows[2].updated_at); assert.equal(rows[2].submitted_at,null);
+  assert.equal(rows[0].values_count,15); assert.equal(rows[1].values_count,15);
+  assert.ok(rows[2].values_count>=11 && rows[2].values_count<15); assert.ok(rows[2].updated_at); assert.equal(rows[2].submitted_at,null);
   assert.equal(rows[3].values_count,0);
   assert.ok(database.prepare("SELECT COUNT(*) count FROM notes WHERE dealer_id='DEMO-001'").get().count>=2);
 });
@@ -35,11 +35,12 @@ test("KPI values are finite and operational relationships are credible",()=>{
   for(const submission of submissions){
     const values=Object.fromEntries(database.prepare("SELECT k.code,v.value FROM kpi_values v JOIN kpi_definitions k ON k.id=v.kpi_id WHERE v.submission_id=?").all(submission.id).map(row=>[row.code,row.value]));
     assert.ok(Object.values(values).every(Number.isFinite));
-    assert.equal(values.units_sold,values.new_units_sold+values.used_units_sold);
-    assert.ok(values.workshop_available_hours>0 && values.workshop_worked_hours>0);
+    assert.ok(values.sdf_parts_revenue_total<=values.parts_revenue_total);
+    assert.ok(values.external_parts_revenue_total<=values.parts_revenue_total);
+    assert.ok(values.technician_presence_hours>0 && values.workshop_worked_hours_total>0);
     if(submission.dealer_id!=="DEMO-047"){
-      assert.ok(values.orders_acquired<=values.quotes_issued);
-      assert.ok(values.workshop_billed_hours<=values.workshop_worked_hours*1.2);
+      assert.ok(values.external_sdf_parts_revenue_total<=values.external_parts_revenue_total);
+      assert.ok(values.customer_sold_hours_total<=values.workshop_worked_hours_total*1.2);
     }
   }
   const anomalous=database.prepare("SELECT validation_issues_json FROM submissions WHERE dealer_id='DEMO-047' AND campaign_id='campaign-2026-1'").get();
@@ -47,7 +48,7 @@ test("KPI values are finite and operational relationships are credible",()=>{
 });
 
 test("AgriNord has compatible historical KPI values and positive movement",()=>{
-  const values=database.prepare(`SELECT c.year,k.code,v.value FROM kpi_values v JOIN submissions s ON s.id=v.submission_id JOIN campaigns c ON c.id=s.campaign_id JOIN kpi_definitions k ON k.id=v.kpi_id WHERE s.dealer_id='DEMO-001' AND k.code='revenue_total' ORDER BY c.year`).all();
+  const values=database.prepare(`SELECT c.year,k.code,v.value FROM kpi_values v JOIN submissions s ON s.id=v.submission_id JOIN campaigns c ON c.id=s.campaign_id JOIN kpi_definitions k ON k.id=v.kpi_id WHERE s.dealer_id='DEMO-001' AND k.code='company_revenue_total' ORDER BY c.year`).all();
   assert.equal(values.length,2); assert.equal(values[0].year,2025); assert.equal(values[1].year,2026); assert.ok(values[1].value>values[0].value);
   const versions=database.prepare("SELECT COUNT(DISTINCT questionnaire_version) count FROM submissions WHERE dealer_id='DEMO-001'").get(); assert.equal(versions.count,1);
 });

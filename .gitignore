@@ -3,6 +3,8 @@ data/*.sqlite-shm
 data/*.sqlite-wal
 .DS_Store
 *.png
+!assets/sdf-logo-primary.png
+!assets/sdf-logo-secondary.png
 node_modules/
 .env
 *.log

@@ -68,14 +68,15 @@ export function mapSubmissionToKpis(submission, definitions, config = getJotform
   for (const [code, raw] of Object.entries(normalized.kpis)) {
     const definition = byCode.get(code);
     if (!definition || raw === null || raw === "") continue;
-    const number = Number(String(raw).replace(",","."));
+    const text=String(raw).trim().replace(/\s/g,"");
+    const italianThousands=["currency","hours","integer"].includes(definition.kind) && /^\d{1,3}(\.\d{3})+$/.test(text);
+    const number = Number(text.includes(",") ? text.replace(/\./g,"").replace(",",".") : italianThousands ? text.replace(/\./g,"") : text);
     if (!Number.isFinite(number)) { issues.push({ code, message:"Valore KPI non numerico" }); continue; }
     if (definition.min_value !== null && number < definition.min_value) issues.push({ code, message:`Valore inferiore al minimo ${definition.min_value}` });
     else if (definition.max_value !== null && number > definition.max_value) issues.push({ code, message:`Valore superiore al massimo ${definition.max_value}` });
     else values.push({ kpiId:definition.id,code,value:number,unit:definition.unit });
   }
-  const legacyRequiredCodes = new Set(["revenue","margin","machines","parts_share","active_customers","quote_conversion","response_hours","customer_satisfaction","service_incidence","annual_growth"]);
-  for (const definition of definitions.filter((item) => legacyRequiredCodes.has(item.code))) {
+  for (const definition of definitions.filter((item) => item.active && item.required && !item.derived)) {
     if (!values.some((item) => item.kpiId === definition.id)) issues.push({ code:definition.code,message:"KPI obbligatorio mancante" });
   }
   return { ...normalized, values, issues };

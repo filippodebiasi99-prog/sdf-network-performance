@@ -56,40 +56,33 @@ function collectionStatus(index) {
 }
 
 function makeInputs(index,area) {
-  const random=randomFor(`sdf-demo-v1:${index}`);
+  const random=randomFor(`sdf-client-v1:${index}`);
   const size=.82 + (index % 5) * .17;
   const areaFactor={"Nord Ovest":1.06,"Nord Est":1.03,"Centro":.98,"Sud e Isole":.91}[area];
   const performance=index === 1 ? 1.18 : index === 2 ? 1 : .9 + random() * .2;
   const revenue=round(3_650_000 * size * areaFactor * performance,-3);
-  const units=Math.max(24,Math.round(52 * size * performance));
-  const newUnits=Math.round(units * (.69 + random() * .08));
   const partsRevenue=round(revenue * (.15 + random() * .045),-2);
-  const serviceRevenue=round(revenue * (.105 + random() * .035),-2);
-  const available=round(4_150 * size,1);
-  const worked=round(available * (.73 + random() * .13),1);
+  const sdfPartsRevenue=round(partsRevenue * (.52 + random() * .22),-2);
+  const externalPartsRevenue=round(partsRevenue * (.48 + random() * .18),-2);
+  const presenceHours=round(9_800 * size,1);
+  const workedHours=round(presenceHours * (.74 + random() * .12),1);
   const anomalous=index === 47;
-  const quotes=Math.max(units,Math.round(units * (2.6 + random() * .7)));
   const values={
-    revenue_total:revenue,
-    revenue_target:round(revenue / (index === 1 ? 1.09 : .91 + random() * .15),-2),
-    units_sold:units,
-    new_units_sold:newUnits,
-    used_units_sold:units-newUnits,
-    quotes_issued:quotes,
-    orders_acquired:anomalous ? quotes+6 : Math.round(quotes * (.3 + random() * .12)),
-    active_customers:Math.round(245 * size * (.95 + random() * .2)),
-    parts_revenue:partsRevenue,
-    parts_target:round(partsRevenue / (.9 + random() * .15),-2),
-    parts_orders:Math.round(690 * size * (.9 + random() * .2)),
-    lost_parts_sales:round(partsRevenue * (.018 + random() * .025),-2),
-    service_revenue:serviceRevenue,
-    workshop_available_hours:available,
-    workshop_worked_hours:worked,
-    workshop_billed_hours:round(worked * (anomalous ? 1.26 : .83 + random() * .13),1),
-    work_orders:Math.round(610 * size * (.9 + random() * .18)),
-    warranty_hours:round(worked * (.055 + random() * .055),1),
-    customer_satisfaction:round(index === 1 ? 9.1 : 7.5 + random() * 1.35,1),
-    employees_total:Math.round(16 * size + random() * 7)
+    company_revenue_total:revenue,
+    parts_revenue_total:partsRevenue,
+    sdf_parts_revenue_total:sdfPartsRevenue,
+    parts_average_cost:round(78 + random() * 35,2),
+    sdf_parts_average_cost:round(72 + random() * 31,2),
+    external_parts_revenue_total:externalPartsRevenue,
+    external_sdf_parts_revenue_total:round(externalPartsRevenue * (anomalous ? 1.08 : .5 + random() * .22),-2),
+    inventory_end_value:round(partsRevenue * (.28 + random() * .14),-2),
+    urgent_parts_orders_pct:round(7 + random() * 15,1),
+    inventory_turnover:round(2.2 + random() * 3.1,2),
+    workshop_labor_rate:round(58 + random() * 18,2),
+    field_labor_rate:round(72 + random() * 24,2),
+    technician_presence_hours:presenceHours,
+    workshop_worked_hours_total:workedHours,
+    customer_sold_hours_total:round(workedHours * (anomalous ? 1.26 : .82 + random() * .15),1)
   };
   return values;
 }
@@ -97,20 +90,23 @@ function makeInputs(index,area) {
 function previousInputs(current,index) {
   const random=randomFor(`sdf-demo-history:${index}`);
   const factor=index === 1 ? .91 : .93 + random() * .11;
-  const units=Math.max(1,Math.round(current.units_sold * factor));
-  const newUnits=Math.round(units * current.new_units_sold/current.units_sold);
-  const revenue=round(current.revenue_total * factor,-2);
-  const partsRevenue=round(current.parts_revenue * factor,-2);
-  const serviceRevenue=round(current.service_revenue * factor,-2);
-  const available=round(current.workshop_available_hours * (.97 + random() * .03),1);
-  const worked=round(Math.min(available,current.workshop_worked_hours * factor),1);
+  const presence=round(current.technician_presence_hours * (.97 + random() * .03),1);
+  const worked=round(Math.min(presence,current.workshop_worked_hours_total * factor),1);
   return {
     ...current,
-    revenue_total:revenue,revenue_target:round(revenue/.96,-2),units_sold:units,new_units_sold:newUnits,used_units_sold:units-newUnits,
-    quotes_issued:Math.round(current.quotes_issued*factor),orders_acquired:Math.round(current.orders_acquired*factor),active_customers:Math.round(current.active_customers*factor),
-    parts_revenue:partsRevenue,parts_target:round(partsRevenue/.95,-2),parts_orders:Math.round(current.parts_orders*factor),lost_parts_sales:round(current.lost_parts_sales*factor,-2),
-    service_revenue:serviceRevenue,workshop_available_hours:available,workshop_worked_hours:worked,workshop_billed_hours:round(worked*.89,1),
-    work_orders:Math.round(current.work_orders*factor),warranty_hours:round(worked*.08,1),customer_satisfaction:round(Math.max(0,current.customer_satisfaction-.2),1),employees_total:Math.max(1,Math.round(current.employees_total*factor))
+    company_revenue_total:round(current.company_revenue_total*factor,-2),
+    parts_revenue_total:round(current.parts_revenue_total*factor,-2),
+    sdf_parts_revenue_total:round(current.sdf_parts_revenue_total*factor,-2),
+    external_parts_revenue_total:round(current.external_parts_revenue_total*factor,-2),
+    external_sdf_parts_revenue_total:round(current.external_sdf_parts_revenue_total*factor,-2),
+    inventory_end_value:round(current.inventory_end_value*(.94+random()*.1),-2),
+    urgent_parts_orders_pct:round(Math.max(0,current.urgent_parts_orders_pct+random()*2-1),1),
+    inventory_turnover:round(Math.max(0,current.inventory_turnover*(.94+random()*.08)),2),
+    workshop_labor_rate:round(current.workshop_labor_rate*(.97+random()*.02),2),
+    field_labor_rate:round(current.field_labor_rate*(.97+random()*.02),2),
+    technician_presence_hours:presence,
+    workshop_worked_hours_total:worked,
+    customer_sold_hours_total:round(worked*.88,1)
   };
 }
 

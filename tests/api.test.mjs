@@ -32,16 +32,30 @@ test("health and overview are calculated from SQLite", async () => {
   assert.equal(overview.performance.sample,48);
   assert.equal(overview.performance.metrics.length,5);
   assert.equal(overview.performance.leaders.length,5);
-  assert.equal(overview.performance.leaders[0].name,"AgriLinea Demo");
-  assert.ok(overview.performance.metrics.every((metric) => Number.isFinite(metric.value)));
+  assert.ok(overview.performance.leaders[0].value>=overview.performance.leaders[1].value);
+  assert.deepEqual(overview.performance.metrics.map((metric) => metric.code),["company_revenue_total","parts_margin_average","parts_revenue_total","inventory_turnover","inventory_end_value"]);
+  assert.equal(overview.performance.metrics.find((metric) => metric.code === "parts_margin_average").note,"Formula da confermare");
+  assert.ok(overview.performance.metrics.filter((metric) => metric.code !== "parts_margin_average").every((metric) => Number.isFinite(metric.value)));
   assert.equal(overview.performance.areas.length,4);
+  const expectedLeader = database.prepare(`
+    SELECT d.id
+    FROM kpi_values v
+    JOIN kpi_definitions k ON k.id=v.kpi_id
+    JOIN submissions s ON s.id=v.submission_id
+    JOIN dealers d ON d.id=s.dealer_id
+    WHERE s.campaign_id='campaign-2026-1' AND s.status IN ('submitted','verify') AND k.code='parts_revenue_total'
+    ORDER BY v.value DESC LIMIT 1
+  `).get();
+  assert.equal(overview.performance.leaders[0].id,expectedLeader.id);
 });
 
 test("frontend assets are served with the correct content types", async () => {
   const assets = [
-    ["/styles.css?v=7","text/css"],
+    ["/styles.css?v=8","text/css"],
     ["/app.js?v=2","text/javascript"],
-    ["/portal.js?v=4","text/javascript"]
+    ["/portal.js?v=4","text/javascript"],
+    ["/assets/sdf-logo-primary.png","image/png"],
+    ["/assets/sdf-logo-secondary.png","image/png"]
   ];
   for (const [asset,contentType] of assets) {
     const response = await fetch(`${baseUrl}${asset}`);
@@ -65,7 +79,7 @@ test("dealer filters and details return stored values", async () => {
   const detail = await fetch(`${baseUrl}/api/dealers/DEMO-001`).then((response) => response.json());
   assert.equal(detail.dealer.name, "AgriNord Demo");
   assert.equal(detail.dealer.access_token, undefined);
-  assert.equal(detail.values.length, 28);
+  assert.equal(detail.values.length, 15);
   assert.match(detail.surveyUrl,/\/compila\//);
   assert.equal(detail.collectionLink.status,"ACTIVE");
 });
@@ -92,7 +106,7 @@ test("final submission rejects missing required KPI values", async () => {
   const response = await fetch(`${baseUrl}/api/survey/${token}/submit`, { method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify({values:{}}) });
   assert.equal(response.status, 422);
   const payload = await response.json();
-  assert.equal(Object.keys(payload.details).length, 28);
+  assert.equal(Object.keys(payload.details).length, 15);
 });
 
 test("CSV export contains dealer and KPI columns", async () => {

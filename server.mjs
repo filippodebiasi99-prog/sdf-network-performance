@@ -226,7 +226,7 @@ function ensureCampaignLinks(database) {
 }
 
 function ensureKpiDefinitions(database) {
-  database.prepare("UPDATE kpi_definitions SET active=0 WHERE questionnaire_version IS NULL").run();
+  database.prepare("UPDATE kpi_definitions SET active=0 WHERE questionnaire_version IS NULL OR questionnaire_version<>?").run(QUESTIONNAIRE_VERSION);
   const insert = database.prepare(`INSERT INTO kpi_definitions(id,code,name,description,unit,kind,required,min_value,max_value,sort_order,section,decimals,placeholder,validation,active,derived,questionnaire_version,formula_version,required_metrics)
     VALUES(@id,@code,@name,@description,@unit,@kind,@required,@min_value,@max_value,@sort_order,@section,@decimals,@placeholder,@validation,@active,@derived,@questionnaire_version,@formula_version,@required_metrics)
     ON CONFLICT(code) DO UPDATE SET name=excluded.name,description=excluded.description,unit=excluded.unit,kind=excluded.kind,required=excluded.required,min_value=excluded.min_value,max_value=excluded.max_value,sort_order=excluded.sort_order,section=excluded.section,decimals=excluded.decimals,placeholder=excluded.placeholder,validation=excluded.validation,active=excluded.active,derived=excluded.derived,questionnaire_version=excluded.questionnaire_version,formula_version=excluded.formula_version,required_metrics=excluded.required_metrics`);
@@ -240,29 +240,37 @@ function ensureKpiDefinitions(database) {
 
 function migrateLegacyKpis(database) {
   database.prepare("UPDATE submissions SET questionnaire_version=COALESCE(questionnaire_version,'legacy-v1')").run();
-  const mappings = [["revenue","revenue_total",1_000_000],["machines","units_sold",1],["active_customers","active_customers",1],["customer_satisfaction","customer_satisfaction",1],["parts_revenue","parts_revenue",1_000_000],["service_revenue","service_revenue",1_000_000]];
-  for (const [oldCode,newCode,multiplier] of mappings) database.prepare(`INSERT OR IGNORE INTO kpi_values(submission_id,kpi_id,value,note,source_type)
-    SELECT v.submission_id,n.id,v.value * ?,v.note,'MIGRATED_LEGACY' FROM kpi_values v JOIN kpi_definitions o ON o.id=v.kpi_id JOIN kpi_definitions n ON n.code=? AND n.questionnaire_version=? WHERE o.code=?`).run(multiplier,newCode,QUESTIONNAIRE_VERSION,oldCode);
 }
 
 function demoQuestionnaireValues(database, submission, index) {
   const legacy = Object.fromEntries(database.prepare("SELECT k.code,v.value FROM kpi_values v JOIN kpi_definitions k ON k.id=v.kpi_id WHERE v.submission_id=?").all(submission.id).map((item) => [item.code,item.value]));
-  const revenue = Number(legacy.revenue_total ?? (4_000_000 + index * 85_000));
-  const units = Math.max(1,Math.round(Number(legacy.units_sold ?? 60 + index)));
-  const newUnits = Math.round(units * .72);
-  const partsRevenue = Number(legacy.parts_revenue ?? revenue * .18);
-  const serviceRevenue = Number(legacy.service_revenue ?? revenue * .12);
+  const revenue = Number(legacy.company_revenue_total ?? legacy.revenue_total ?? (4_000_000 + index * 85_000));
+  const partsRevenue = Number(legacy.parts_revenue_total ?? legacy.parts_revenue ?? revenue * .18);
+  const sdfPartsRevenue = Number(legacy.sdf_parts_revenue_total ?? partsRevenue * .64);
+  const externalPartsRevenue = Number(legacy.external_parts_revenue_total ?? partsRevenue * .56);
+  const presenceHours = Number(legacy.technician_presence_hours ?? legacy.workshop_available_hours ?? 4_800 + index * 20);
+  const workedHours = Number(legacy.workshop_worked_hours_total ?? legacy.workshop_worked_hours ?? presenceHours * .8);
   return {
-    revenue_total:revenue,revenue_target:Math.round(revenue/0.96),units_sold:units,new_units_sold:newUnits,used_units_sold:units-newUnits,
-    quotes_issued:units*3,orders_acquired:units,active_customers:Number(legacy.active_customers ?? 300+index*9),parts_revenue:partsRevenue,
-    parts_target:Math.round(partsRevenue/0.94),parts_orders:760+index*17,lost_parts_sales:Math.round(partsRevenue*.025),service_revenue:serviceRevenue,
-    workshop_available_hours:4800+index*20,workshop_worked_hours:3780+index*18,workshop_billed_hours:3420+index*16,work_orders:720+index*11,
-    warranty_hours:320+index*3,customer_satisfaction:Number(legacy.customer_satisfaction ?? 7.8+(index%8)*.15),employees_total:18+(index%9)
+    company_revenue_total:revenue,
+    parts_revenue_total:partsRevenue,
+    sdf_parts_revenue_total:sdfPartsRevenue,
+    parts_average_cost:Number(legacy.parts_average_cost ?? 84+(index%11)*2.15),
+    sdf_parts_average_cost:Number(legacy.sdf_parts_average_cost ?? 78+(index%9)*2.05),
+    external_parts_revenue_total:externalPartsRevenue,
+    external_sdf_parts_revenue_total:Number(legacy.external_sdf_parts_revenue_total ?? externalPartsRevenue*.62),
+    inventory_end_value:Number(legacy.inventory_end_value ?? partsRevenue*.34),
+    urgent_parts_orders_pct:Number(legacy.urgent_parts_orders_pct ?? 8+(index%12)*.9),
+    inventory_turnover:Number(legacy.inventory_turnover ?? legacy.inventory_turns ?? 2.4+(index%10)*.24),
+    workshop_labor_rate:Number(legacy.workshop_labor_rate ?? 59+(index%9)*1.8),
+    field_labor_rate:Number(legacy.field_labor_rate ?? 74+(index%10)*2.1),
+    technician_presence_hours:presenceHours,
+    workshop_worked_hours_total:workedHours,
+    customer_sold_hours_total:Number(legacy.customer_sold_hours_total ?? legacy.workshop_billed_hours ?? workedHours*.9)
   };
 }
 
 function ensureDemoQuestionnaireValues(database) {
-  const submissions = database.prepare("SELECT id,questionnaire_version FROM submissions WHERE source_type='MANUAL_DEMO' ORDER BY id").all();
+  const submissions = database.prepare("SELECT id,questionnaire_version FROM submissions WHERE source_type IN ('MANUAL_DEMO','DEMO_SEED') AND (questionnaire_version IS NULL OR questionnaire_version<>?) ORDER BY id").all(QUESTIONNAIRE_VERSION);
   const insert = database.prepare("INSERT OR IGNORE INTO kpi_values(submission_id,kpi_id,value,note,source_type) VALUES(?,?,?,?,?)");
   submissions.forEach((submission,index) => {
     const inputs = demoQuestionnaireValues(database,submission,index);
@@ -428,22 +436,23 @@ function overviewPayload(database, campaignId) {
     const total = values.reduce((sum,row) => sum + row.value,0);
     return { code,name:definition?.kpi_name || definition?.name || code,unit:definition?.unit || "",kind:definition?.kind || "number",value:aggregation === "average" ? (values.length ? total / values.length : null) : total,average:values.length ? total / values.length : null,count:values.length };
   };
-  const revenueRows = performanceRows.filter((row) => row.code === "revenue_total" && Number.isFinite(row.value));
-  const revenueAverage = revenueRows.length ? revenueRows.reduce((sum,row) => sum + row.value,0) / revenueRows.length : null;
+  const companyRevenueRows = performanceRows.filter((row) => row.code === "company_revenue_total" && Number.isFinite(row.value));
+  const partsRevenueRows = performanceRows.filter((row) => row.code === "parts_revenue_total" && Number.isFinite(row.value));
+  const partsRevenueAverage = partsRevenueRows.length ? partsRevenueRows.reduce((sum,row) => sum + row.value,0) / partsRevenueRows.length : null;
   const performance = {
     metrics:[
-      metricSummary("revenue_total"),
-      metricSummary("units_sold"),
-      metricSummary("parts_revenue"),
-      metricSummary("service_revenue"),
-      metricSummary("customer_satisfaction","average")
+      metricSummary("company_revenue_total"),
+      { code:"parts_margin_average",name:"Marginalità media ricambi",unit:"%",kind:"percentage",value:null,average:null,count:0,note:"Formula da confermare" },
+      metricSummary("parts_revenue_total"),
+      metricSummary("inventory_turnover","average"),
+      metricSummary("inventory_end_value")
     ],
-    leaders:[...revenueRows].sort((a,b) => b.value-a.value).slice(0,5).map((row,index) => ({ id:row.id,name:row.dealer_name,initials:row.initials,region:row.region,area:row.area,value:row.value,position:index+1,deltaFromAverage:revenueAverage ? (row.value-revenueAverage)/revenueAverage*100 : null })),
-    areas:[...new Set(revenueRows.map((row) => row.area))].map((area) => {
-      const scoped=revenueRows.filter((row) => row.area === area);
+    leaders:[...partsRevenueRows].sort((a,b) => b.value-a.value).slice(0,5).map((row,index) => ({ id:row.id,name:row.dealer_name,initials:row.initials,region:row.region,area:row.area,value:row.value,position:index+1,deltaFromAverage:partsRevenueAverage ? (row.value-partsRevenueAverage)/partsRevenueAverage*100 : null })),
+    areas:[...new Set(companyRevenueRows.map((row) => row.area))].map((area) => {
+      const scoped=companyRevenueRows.filter((row) => row.area === area);
       return { area,count:scoped.length,average:scoped.reduce((sum,row) => sum+row.value,0)/scoped.length };
     }).sort((a,b) => b.average-a.average),
-    sample:revenueRows.length
+    sample:companyRevenueRows.length
   };
   const alertOrder={NEEDS_REVIEW:0,DRAFT:1,REOPENED:1,NOT_STARTED:2};
   return {
@@ -511,7 +520,7 @@ function surveyPayload(database, token) {
   if (!dealer || !campaign) throw Object.assign(new Error("Link di compilazione non valido"), { status: 404 });
   const submission = database.prepare("SELECT * FROM submissions WHERE dealer_id=? AND campaign_id=?").get(dealer.id,campaign.id);
   const stored = submission ? Object.fromEntries(database.prepare("SELECT kpi_id,value,note FROM kpi_values WHERE submission_id=?").all(submission.id).map((item) => [item.kpi_id,{ value:item.value,note:item.note }])) : {};
-  const kpis = database.prepare("SELECT * FROM kpi_definitions ORDER BY sort_order").all();
+  const kpis = database.prepare("SELECT * FROM kpi_definitions WHERE active=1 ORDER BY sort_order").all();
   return { dealer, campaign, submission:submission || { status:"missing",updated_at:null,submitted_at:null }, kpis, values:stored };
 }
 
@@ -984,7 +993,7 @@ export async function handleApi(request, response, url, database = db) {
 }
 
 const contentTypes = { ".html":"text/html; charset=utf-8", ".css":"text/css; charset=utf-8", ".js":"text/javascript; charset=utf-8", ".svg":"image/svg+xml", ".png":"image/png", ".md":"text/markdown; charset=utf-8" };
-const publicAssets = new Set(["index.html","styles.css","app.js","portal.js"]);
+const publicAssets = new Set(["index.html","styles.css","app.js","portal.js","assets/sdf-logo-primary.png","assets/sdf-logo-secondary.png"]);
 
 function serveStatic(response, pathname) {
   const requested = pathname === "/" || pathname.startsWith("/compila/") ? "index.html" : pathname.slice(1);
