@@ -51,7 +51,7 @@ test("health and overview are calculated from SQLite", async () => {
 
 test("frontend assets are served with the correct content types", async () => {
   const assets = [
-    ["/styles.css?v=17","text/css"],
+    ["/styles.css?v=18","text/css"],
     ["/app.js?v=5","text/javascript"],
     ["/portal.js?v=5","text/javascript"],
     ["/assets/sdf-logo-primary.png","image/png"],
