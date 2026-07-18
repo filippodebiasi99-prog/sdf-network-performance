@@ -22,7 +22,7 @@
   --danger: #c74b3f;
   --danger-soft: #f8dfdc;
   --surface: var(--white);
-  --canvas: #fafaf8;
+  --canvas: #f5f6f8;
   --shadow-card: 0 12px 34px rgba(35, 35, 35, .055);
   --shadow-float: 0 8px 24px rgba(35, 35, 35, .045);
   --radius-sm: 10px;
@@ -74,7 +74,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 .campaign-progress span { display:block; height:100%; border-radius:inherit; background:var(--accent); }
 .user-card { display:none; }
 .app-main { min-width:0; min-height:100dvh; margin-left:var(--sidebar-width); overflow-x:hidden; background:var(--canvas); }
-.topbar { position:sticky; top:0; z-index:12; height:92px; display:grid; grid-template-columns:minmax(360px,1fr) auto; align-items:center; gap:24px; padding:0 28px; border-bottom:1px solid rgba(29,29,27,.045); background:#f5f6f8; }
+.topbar { position:sticky; top:0; z-index:12; height:92px; display:grid; grid-template-columns:minmax(360px,1fr) auto; align-items:center; gap:24px; padding:0 28px; border-bottom:1px solid rgba(29,29,27,.045); background:var(--canvas); }
 .topbar-command { width:100%; height:56px; display:grid; grid-template-columns:auto minmax(0,1fr); align-items:center; gap:13px; padding:0 20px; border:1px solid rgba(29,29,27,.1); border-radius:999px; color:var(--muted); background:var(--white); box-shadow:0 1px 2px rgba(29,29,27,.02); text-align:left; cursor:pointer; transition:color .15s ease,border-color .15s ease,box-shadow .15s ease; }
 .topbar-command:hover { color:var(--ink-soft); border-color:rgba(29,29,27,.18); background:var(--white); box-shadow:0 3px 12px rgba(29,29,27,.035); }
 .topbar-command svg { width:19px; height:19px; display:block; }
