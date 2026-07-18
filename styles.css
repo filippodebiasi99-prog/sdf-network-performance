@@ -58,6 +58,9 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 .nav-item:hover > span:first-child { color:var(--accent); background:transparent; }
 .nav-item.is-active > span:first-child { color:var(--accent); background:transparent; box-shadow:none; }
 .nav-item svg { width:21px; height:21px; display:block; }
+.nav-icon-solid { display:none; }
+.nav-item.is-active .nav-icon-outline { display:none; }
+.nav-item.is-active .nav-icon-solid { display:inline; }
 .soon { justify-self: end; padding: 3px 6px; border-radius: 99px; color: var(--muted); background: var(--gray-75); font-size: 12px; text-transform: uppercase; }
 .nav-item.is-active .soon { color:var(--accent-text); background:rgba(218,141,27,.14); }
 .sidebar-bottom { align-self:end; padding:24px; }
