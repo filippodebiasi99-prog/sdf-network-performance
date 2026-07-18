@@ -993,7 +993,7 @@ export async function handleApi(request, response, url, database = db) {
 }
 
 const contentTypes = { ".html":"text/html; charset=utf-8", ".css":"text/css; charset=utf-8", ".js":"text/javascript; charset=utf-8", ".svg":"image/svg+xml", ".png":"image/png", ".md":"text/markdown; charset=utf-8" };
-const publicAssets = new Set(["index.html","styles.css","app.js","portal.js","assets/sdf-logo-primary.png","assets/sdf-logo-secondary.png"]);
+const publicAssets = new Set(["index.html","styles.css","design-overrides.css","app.js","portal.js","assets/sdf-logo-primary.png","assets/sdf-logo-secondary.png","assets/card1.png","assets/italy-macroareas.svg","assets/menu-1.svg","assets/menu-2.svg","assets/menu-3.svg","assets/menu-4.svg","assets/menu-5.svg","assets/menu-6.svg"]);
 
 function serveStatic(response, pathname) {
   const requested = pathname === "/" || pathname.startsWith("/compila/") ? "index.html" : pathname.slice(1);
