@@ -566,14 +566,14 @@ code { padding:2px 5px; border-radius:5px; background:var(--gray-75); font-famil
 .collection-mode main { padding:0; }
 .collection-mode .button { min-height:44px; font-size:14px; }
 .collection-mode .eyebrow { font-size:12px; }
-.app-demo-banner { position:sticky; top:92px; z-index:11; padding:7px 20px; border-bottom:1px solid var(--accent-dark); color:var(--ink); background:var(--accent); text-align:center; font-size:12px; font-weight:500; }
+.app-demo-banner { position:sticky; top:92px; z-index:11; padding:7px 20px; border-bottom:1px solid var(--accent-dark); color:var(--white); background:var(--accent); text-align:center; font-size:12px; font-weight:500; }
 .collection-page { width:min(1180px,100%); min-height:100dvh; margin:0 auto; padding:0 clamp(20px,4vw,48px) 28px; }
 .collection-page > *,.questionnaire-shell > * { min-width:0; max-width:100%; }
 .demo-role-control { min-height:46px; display:flex; align-items:center; gap:7px; padding:5px 11px 5px 15px; border:1px solid rgba(29,29,27,.1); border-radius:999px; color:var(--muted); background:var(--white); font-size:11px; font-weight:400; transition:border-color .15s ease,transform .15s ease; }
 .demo-role-control:hover { border-color:rgba(243,106,21,.34); background:var(--white); transform:translateY(-1px); }
 .demo-role-control select { border:0; outline:0; color:var(--ink); background:transparent; font:inherit; text-transform:none; }
 .role-sdf [data-jet-only] { display:none!important; }
-.collection-demo-strip { margin-inline:calc(clamp(20px,4vw,48px) * -1); padding:9px clamp(20px,4vw,48px); border-bottom:1px solid var(--accent-dark); color:var(--ink); background:var(--accent); font-size:12px; line-height:1.45; font-weight:600; text-align:center; }
+.collection-demo-strip { margin-inline:calc(clamp(20px,4vw,48px) * -1); padding:9px clamp(20px,4vw,48px); border-bottom:1px solid var(--accent-dark); color:var(--white); background:var(--accent); font-size:12px; line-height:1.45; font-weight:600; text-align:center; }
 .collection-header { min-height:76px; display:flex; align-items:center; justify-content:space-between; gap:20px; border-bottom:1px solid var(--line); }
 .collection-brand { display:flex; align-items:center; gap:12px; }
 .collection-brand-logo { width:138px; height:auto; display:block; flex:0 0 auto; }
