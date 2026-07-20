@@ -1267,7 +1267,7 @@
         letter-spacing: -.055em;
       }
       .analysis-summary-value small { margin-top: 8px; color: rgba(255,255,255,.78); font-size: 11px; }
-      .analysis-design-page .analysis-results-grid { grid-template-columns: 1fr; gap: 18px; }
+      .analysis-design-page .analysis-results-grid { grid-template-columns: minmax(0,1.55fr) minmax(320px,.75fr); gap: 18px; align-items: start; }
       .analysis-design-page .analysis-results-grid > .panel {
         overflow: hidden;
         border-color: rgba(29,29,27,.07);
@@ -1374,6 +1374,39 @@
         font-style: normal;
         font-weight: 600;
       }
+      .analysis-region-list-body { padding: 10px 20px 16px; }
+      .analysis-region-ranking-list li {
+        min-height: 76px;
+        grid-template-columns: 38px minmax(150px,1fr) auto;
+        gap: 8px 12px;
+        padding: 10px 0;
+      }
+      .analysis-region-ranking-list .ranking-position {
+        grid-row: 1 / span 2;
+        align-self: center;
+        width: 30px;
+        height: 30px;
+        display: grid;
+        place-items: center;
+        border: 1px solid #171714;
+        border-radius: 50%;
+        color: #171714;
+        background: #fff;
+        font-size: 12px;
+        font-weight: 500;
+        font-variant-numeric: tabular-nums;
+      }
+      .analysis-region-ranking-list li:first-child .ranking-position { color: #f36a15; border-color: #f36a15; }
+      .analysis-region-ranking-list .ranking-dealer { cursor: default; }
+      .analysis-region-ranking-list .ranking-dealer strong { font-size: 13px; font-weight: 600; }
+      .analysis-region-ranking-list .ranking-dealer small { font-weight: 400; }
+      .analysis-region-ranking-list .ranking-value strong { font-size: 13px; font-weight: 600; }
+      .analysis-region-ranking-list .ranking-value small b { font-weight: 500; }
+      .analysis-region-ranking-list .ranking-value small b.is-positive { color: #2b9a36; }
+      .analysis-region-ranking-list .ranking-value small b.is-negative { color: #747572; }
+      .analysis-region-ranking-list .ranking-value small span { color: var(--muted); font-weight: 400; }
+      .analysis-region-ranking-list .ranking-progress { grid-column: 2 / -1; }
+      .analysis-region-list-body .analysis-chart-note { margin-top: 12px; }
       .analysis-region-body { padding: 26px 28px 24px; }
       .analysis-region-overview {
         display: grid;
@@ -1562,28 +1595,23 @@
         font-weight: 700;
       }
       .analysis-design-page .analysis-ranking-list {
-        display: grid;
-        grid-template-columns: repeat(5,minmax(0,1fr));
+        display: block;
       }
       .analysis-design-page .analysis-ranking-list li {
-        min-height: 126px;
-        grid-template-columns: 30px minmax(0,1fr);
-        align-content: center;
-        padding: 16px;
-        border-right: 1px solid rgba(29,29,27,.08);
-        border-bottom: 0;
+        min-height: 72px;
+        grid-template-columns: 30px minmax(0,1fr) auto;
+        padding: 0;
+        border-right: 0;
+        border-bottom: 1px solid rgba(29,29,27,.08);
       }
-      .analysis-design-page .analysis-ranking-list li:last-child { border-right: 0; }
-      .analysis-design-page .analysis-ranking-list li > strong { grid-column: 2; margin-top: 4px; text-align: left; }
-      .analysis-design-page .analysis-ranking-list li.is-leader { margin: 0; border-radius: 12px; }
+      .analysis-design-page .analysis-ranking-list li:last-child { border-bottom: 0; }
+      .analysis-design-page .analysis-ranking-list li > strong { grid-column: auto; margin-top: 0; text-align: right; font-weight: 600; }
 
       @media (max-width: 1180px) {
         .analysis-summary-strip { grid-template-columns: repeat(2,minmax(0,1fr)); }
         .analysis-summary-strip article:nth-child(3) { border-left: 0; border-top: 1px solid rgba(29,29,27,.08); }
         .analysis-summary-strip article:nth-child(4) { border-top: 1px solid rgba(29,29,27,.08); }
-        .analysis-region-overview { grid-template-columns: 1.3fr 1fr 1fr; }
-        .analysis-design-page .analysis-ranking-list { grid-template-columns: repeat(2,minmax(0,1fr)); }
-        .analysis-design-page .analysis-ranking-list li { border-right: 1px solid rgba(29,29,27,.08); border-bottom: 1px solid rgba(29,29,27,.08); }
+        .analysis-design-page .analysis-results-grid { grid-template-columns: 1fr; }
       }
       @media (max-width: 760px) {
         .analysis-design-page { width: calc(100vw - 24px); max-width: calc(100vw - 24px); margin-right: 24px; overflow: hidden; }
@@ -1618,6 +1646,12 @@
         .analysis-panel-heading p { overflow-wrap: anywhere; white-space: normal; }
         .analysis-design-page .analysis-unit { display: none; }
         .analysis-panel-icon { width: 36px; height: 36px; }
+        .analysis-region-list-body { padding: 8px 16px 16px; }
+        .analysis-region-ranking-list li { grid-template-columns: 34px minmax(0,1fr); gap: 6px 9px; }
+        .analysis-region-ranking-list .ranking-position { grid-row: 1 / span 3; width: 28px; height: 28px; }
+        .analysis-region-ranking-list .ranking-value { grid-column: 2; display: flex; align-items: baseline; gap: 7px; text-align: left; }
+        .analysis-region-ranking-list .ranking-value small { display: block; margin-top: 0; }
+        .analysis-region-ranking-list .ranking-progress { grid-column: 2; }
         .analysis-chart-context { width: 100%; min-width: 0; justify-items: stretch; }
         .analysis-chart-metrics { grid-template-columns: 1fr 1fr; }
         .analysis-design-page .analysis-region-legend { justify-content: flex-start; }
