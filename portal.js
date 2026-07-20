@@ -5,9 +5,15 @@
   statusLabel.draft = "Bozza";
   Object.assign(statusLabel,{ NOT_STARTED:"Non iniziato",DRAFT:"Bozza",SUBMITTED:"Inviato",NEEDS_REVIEW:"Da verificare",VALIDATED:"Validato",REOPENED:"Riaperto" });
 
+  function collectionStatusClass(status) {
+    if (status === "VALIDATED") return "complete";
+    if (["SUBMITTED","NEEDS_REVIEW"].includes(status)) return "verify";
+    if (["DRAFT","REOPENED"].includes(status)) return "draft";
+    return "missing";
+  }
+
   function collectionStatusBadge(status) {
-    const css=status === "NEEDS_REVIEW" ? "verify" : ["SUBMITTED","VALIDATED"].includes(status) ? "complete" : status === "DRAFT" || status === "REOPENED" ? "draft" : "missing";
-    return `<span class="badge ${css}">${escapeHtml(statusLabel[status] || status)}</span>`;
+    return `<span class="badge ${collectionStatusClass(status)}">${escapeHtml(statusLabel[status] || status)}</span>`;
   }
 
   function escapeHtml(value) {
@@ -468,7 +474,7 @@
     return `<section class="page dealer-detail-page" aria-labelledby="page-title">
       <div class="breadcrumbs"><button data-page-link="dealers">Concessionari</button><span>/</span><span>${escapeHtml(dealer.name)}</span></div>
       <header class="page-header"><div class="dealer-hero"><div class="dealer-logo">${escapeHtml(dealer.initials)}</div><div><p class="eyebrow">Scheda concessionario</p><h1 id="page-title">${escapeHtml(dealer.name)}</h1><div class="dealer-meta"><span>${icon("location")}${escapeHtml(dealer.region)}</span><span>${icon("users")}${escapeHtml(dealer.manager)}</span><span>${escapeHtml(dealer.id)}</span></div></div></div><div class="header-actions">${jet&&link?`<a class="button" href="${escapeHtml(link.url)}" target="_blank" rel="noopener">Apri compilazione</a><button class="button" id="edit-dealer">Modifica anagrafica</button><button class="button" id="add-note">Aggiungi nota</button>`:""}<button class="button primary" data-export-csv>${icon("download")}Esporta rete</button></div></header>
-      <div class="summary-strip"><div class="summary-cell"><span>Stato rilevazione</span><strong>${escapeHtml(statusLabel[data.submission.collection_status]||data.submission.collection_status)}</strong></div><div class="summary-cell"><span>Ultimo invio</span><strong>${dealer.sent}</strong></div><div class="summary-cell"><span>Campagna</span><strong>${escapeHtml(data.campaign.name)}</strong></div><div class="summary-cell"><span>KPI compilati</span><strong>${filled} / ${data.values.length}</strong></div></div>
+      <div class="summary-strip"><div class="summary-cell status-${collectionStatusClass(data.submission.collection_status)}"><span>Stato rilevazione</span><strong>${escapeHtml(statusLabel[data.submission.collection_status]||data.submission.collection_status)}</strong></div><div class="summary-cell"><span>Ultimo invio</span><strong>${dealer.sent}</strong></div><div class="summary-cell"><span>Campagna</span><strong>${escapeHtml(data.campaign.name)}</strong></div><div class="summary-cell"><span>KPI compilati</span><strong>${filled} / ${data.values.length}</strong></div></div>
       ${collectionAdmin}
       <div class="comparison-metrics">${data.values.slice(0,4).map((item) => `<article class="comparison-card"><span>${escapeHtml(item.name)}</span><strong>${formatValue(item.value,item)}</strong><small>Media rete: ${formatValue(item.network_avg,item)}</small></article>`).join("")}</div>
       <div class="panel"><div class="panel-header"><div><h2>Performance KPI</h2><p>Valori salvati per ${escapeHtml(data.campaign.name)}</p></div><button class="text-button" data-page-link="analysis">Apri analisi completa →</button></div><div class="table-wrap"><table><thead><tr><th>KPI</th><th>Valore attuale</th><th>Media rete</th><th>Valore precedente</th><th>Differenza</th><th>Variazione</th></tr></thead><tbody>${data.values.map((item) => { const absolute=item.value!==null&&item.previous_value!==null?item.value-item.previous_value:null; const delta=absolute!==null&&item.previous_value!==0?absolute/Math.abs(item.previous_value)*100:null; return `<tr><td class="kpi-name">${escapeHtml(item.name)}</td><td><strong>${formatValue(item.value,item)}</strong></td><td>${formatValue(item.network_avg,item)}</td><td>${formatValue(item.previous_value,item)}</td><td class="delta ${absolute>=0?"positive":"negative"}">${absolute===null?"—":`${absolute>=0?"+":""}${formatValue(absolute,item)}`}</td><td class="delta ${delta>=0?"positive":"negative"}">${delta===null?"—":`${delta>=0?"+":""}${delta.toFixed(1).replace(".",",")}%`}</td></tr>`; }).join("")}</tbody></table></div></div>
@@ -547,7 +553,7 @@
 
   function collectionPage(data) {
     const locked = ["SUBMITTED","NEEDS_REVIEW","VALIDATED"].includes(data.submission.collection_status);
-    const statusClass = data.submission.collection_status === "NEEDS_REVIEW" ? "verify" : locked ? "complete" : ["DRAFT","REOPENED"].includes(data.submission.collection_status) ? "draft" : "missing";
+    const statusClass = collectionStatusClass(data.submission.collection_status);
     const saveLabel=data.submission.updated_at?`Bozza salvata alle ${new Intl.DateTimeFormat("it-IT",{hour:"2-digit",minute:"2-digit"}).format(new Date(data.submission.updated_at))}`:"Bozza non ancora salvata";
     const sectionDescription={"Fatturato e ricambi":"Inserisci i valori economici annuali dell'azienda e del reparto ricambi.","Magazzino e ordini":"Indica stock, urgenze e rotazione del magazzino ricambi.","Tariffe e attività tecnica":"Inserisci tariffe e ore complessive dell'attività tecnica."};
     const dealerIdentity=`<section class="collection-prefilled" aria-labelledby="dealer-prefilled-title"><div><p class="eyebrow">Dati precompilati</p><h3 id="dealer-prefilled-title">Anagrafica concessionaria</h3><p>Verifica i dati associati al link prima di proseguire.</p></div><dl><div><dt>Codice concessionaria</dt><dd>${escapeHtml(data.dealer.id)}</dd></div><div><dt>Nome concessionaria</dt><dd>${escapeHtml(data.dealer.name)}</dd></div><div><dt>Regione</dt><dd>${escapeHtml(data.dealer.region)}</dd></div><div><dt>Area</dt><dd>${escapeHtml(data.dealer.area)}</dd></div><div><dt>Area manager</dt><dd>${escapeHtml(data.dealer.manager)}</dd></div></dl></section>`;

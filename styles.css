@@ -227,7 +227,7 @@ h3 { font-size:13px; font-weight:500; }
 .stack-row-head strong { font-weight:600; }
 .stack-row-head span { color:var(--muted); }
 .stack-bar { height:8px; display:flex; overflow:hidden; border-radius:99px; background:var(--gray-75); }
-.stack-bar .complete { background:var(--accent); }
+.stack-bar .complete { background:var(--success); }
 .stack-bar .verify { background:#f3a25d; }
 .stack-bar .missing { background:var(--gray-75); }
 .status-legend { display:flex; flex-wrap:wrap; gap:13px; margin-top:22px; color:var(--muted); font-size:12px; }
@@ -270,7 +270,7 @@ tbody tr:last-child td { border-bottom:0; }
 .badge.complete { color:var(--success); background:var(--success-soft); }
 .badge.verify { color:var(--warning); background:var(--warning-soft); }
 .badge.missing { color:#707985; background:var(--gray-75); }
-.badge.draft { color:var(--accent-dark); background:var(--accent-soft); }
+.badge.draft { color:var(--danger); background:var(--danger-soft); }
 .quality { display:inline-flex; align-items:center; gap:8px; }
 .quality-bar { width:42px; height:5px; overflow:hidden; border-radius:99px; background:var(--gray-75); }
 .quality-bar i { display:block; height:100%; border-radius:inherit; background:var(--success); }

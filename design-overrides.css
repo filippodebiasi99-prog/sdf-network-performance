@@ -487,9 +487,9 @@
       .collection-metric-icon svg { width: 20px; height: 20px; display: block; }
       .collection-metrics .collection-metric-label { min-width: 0; color: #747572; font-size: 12px; line-height: 1.2; }
       .collection-metrics > div:nth-child(2) .collection-metric-icon,
-      .collection-metrics > div:nth-child(5) .collection-metric-icon,
       .collection-metrics > div:nth-child(6) .collection-metric-icon { color: #f36a15; background: rgba(243,106,21,.10); }
       .collection-metrics > div:nth-child(3) .collection-metric-icon { color: #2b9a36; background: rgba(43,154,54,.10); }
+      .collection-metrics > div:nth-child(4) .collection-metric-icon { color: var(--danger); background: var(--danger-soft); }
       .collection-metrics > div > strong { display: block; margin-top: 12px; font-size: 30px; line-height: 1; font-weight: 500; letter-spacing: -.045em; }
       .collection-metrics > div > small { display: block; margin-top: 7px; color: #747572; font-size: 12px; line-height: 1.25; }
       .collection-metrics > div:first-child { color: #fff; background: #f36a15; }
@@ -509,9 +509,9 @@
       .collection-progress b { display: block; height: 100%; border-radius: inherit; background: var(--progress-fill); }
       .collection-metrics > div:first-child { --progress-fill: #fff; --progress-stripe: rgba(255,255,255,.38); }
       .collection-metrics > div:nth-child(2),
-      .collection-metrics > div:nth-child(5),
       .collection-metrics > div:nth-child(6) { --progress-fill: #f36a15; --progress-stripe: rgba(243,106,21,.30); }
       .collection-metrics > div:nth-child(3) { --progress-fill: #2b9a36; --progress-stripe: rgba(43,154,54,.28); }
+      .collection-metrics > div:nth-child(4) { --progress-fill: var(--danger); --progress-stripe: rgba(199,75,63,.28); }
 
       /* Priorità operative: compatta, leggibile e coerente con le altre card. */
       .priority-panel .panel-header { min-height: 78px; padding: 16px 20px; }
@@ -549,7 +549,7 @@
       .priority-panel .badge { min-height: 26px; padding: 0 9px; font-size: 11px; font-weight: 500; }
       .priority-panel .badge::before { width: 4px; height: 4px; }
       .priority-panel .badge.verify { color: #b84d0c; background: rgba(243,106,21,.10); }
-      .priority-panel .badge.draft { color: #d9570e; background: rgba(243,106,21,.075); }
+      .priority-panel .badge.draft { color: var(--danger); background: var(--danger-soft); }
       .priority-panel .badge.missing { color: #69727d; background: #eef0ef; }
 
       /* Ultimi invii: stessa struttura, enfasi sulla recenza. */
@@ -655,6 +655,8 @@
       .dealer-stat:first-child .dealer-stat-icon { color: #fff; background: rgba(255,255,255,.16); }
       .dealer-stat:nth-child(2) { --dealer-stat-fill: #2b9a36; --dealer-stat-stripe: rgba(43,154,54,.28); }
       .dealer-stat:nth-child(2) .dealer-stat-icon { color: #2b9a36; background: rgba(43,154,54,.10); }
+      .dealer-stat:nth-child(5) { --dealer-stat-fill: var(--danger); --dealer-stat-stripe: rgba(199,75,63,.28); }
+      .dealer-stat:nth-child(5) .dealer-stat-icon { color: var(--danger); background: var(--danger-soft); }
       .dealer-stat:nth-child(6) { --dealer-stat-fill: #8b8d89; --dealer-stat-stripe: rgba(139,141,137,.30); }
       .dealer-stat:nth-child(6) .dealer-stat-icon { color: #666966; background: #f0f1ef; }
       .dealer-stat-icon svg { width: 16px; height: 16px; }
@@ -913,8 +915,11 @@
       .dealer-detail-page .summary-cell:first-child {
         border-left: 0;
         color: #fff;
-        background: #f36a15;
       }
+      .dealer-detail-page .summary-cell.status-complete { background: var(--success); }
+      .dealer-detail-page .summary-cell.status-verify { background: var(--accent); }
+      .dealer-detail-page .summary-cell.status-draft { background: var(--danger); }
+      .dealer-detail-page .summary-cell.status-missing { background: #747572; }
       .dealer-detail-page .summary-cell span {
         color: #777b80;
         font-size: 12px;
