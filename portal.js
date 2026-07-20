@@ -371,7 +371,7 @@
                   <b>${topRegion?analysisValue(topRegion.average):"Nessun dato"}</b>
                   ${regionalDelta===null?"":`<em><span aria-hidden="true">↑</span> ${regionalDelta>=0?"+":""}${regionalDelta.toLocaleString("it-IT",{maximumFractionDigits:1})}% vs rete</em>`}
                 </div>
-                <figure class="analysis-region-map" role="img" aria-label="Area geografica di riferimento per ${topRegion?escapeHtml(topRegion.region):"la regione in testa"}"><svg viewBox="${topRegionMap.viewBox}" aria-hidden="true" focusable="false"><use href="/assets/italy-macroareas.svg?v=2#macroarea-${topRegionMap.id}"></use></svg></figure>
+                <figure class="analysis-region-map" role="img" aria-label="Area geografica di riferimento per ${topRegion?escapeHtml(topRegion.region):"la regione in testa"}"><svg viewBox="${topRegionMap.viewBox}" aria-hidden="true" focusable="false"><defs><pattern id="analysis-region-stripes" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="3" height="9" fill="#f36a15"/></pattern><mask id="analysis-region-mask" x="-1000" y="-1000" width="3000" height="3000" maskUnits="userSpaceOnUse" mask-type="alpha"><use href="/assets/italy-macroareas.svg?v=2#macroarea-${topRegionMap.id}"></use></mask></defs><rect x="-1000" y="-1000" width="3000" height="3000" fill="url(#analysis-region-stripes)" mask="url(#analysis-region-mask)"/></svg></figure>
               </section>
               <dl class="analysis-region-insight-metrics">
                 <div><span class="analysis-region-metric-icon" aria-hidden="true">${icon("clock")}</span><div><dt>Ampiezza regionale</dt><dd>${analysisValue(regionalSpread)}</dd></div></div>
