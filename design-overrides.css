@@ -20,6 +20,7 @@
       .nav-item.is-active .static-icon img {
         filter: invert(49%) sepia(97%) saturate(3298%) hue-rotate(356deg) brightness(99%) contrast(94%);
       }
+      .nav-item:focus-visible { outline: 0; background: #f4f4f2; }
       .business-metric-icon .static-icon { width: 20px; height: 20px; }
       .button .static-icon { width: 18px; height: 18px; }
       .icon-button .static-icon { width: 21px; height: 21px; }
@@ -2094,7 +2095,8 @@
       .help-design-page .help-sidebar nav { gap: 4px; }
       .help-design-page .help-sidebar nav button { min-height: 43px; padding: 0 11px; border-radius: 9px; font-size: 12px; }
       .help-design-page .help-sidebar nav button:hover { background: #faf7f4; }
-      .help-design-page .help-sidebar nav button.is-active { color: #f36a15; background: rgba(243,106,21,.07); box-shadow: inset 3px 0 #f36a15; }
+      .help-design-page .help-sidebar nav button.is-active { color: #f36a15; background: rgba(243,106,21,.07); box-shadow: none; }
+      .help-design-page .help-sidebar nav button:focus-visible { outline: 0; background: #f4f4f2; }
       .help-design-page .help-sidebar nav small { min-width: 22px; padding: 3px 5px; border-radius: 6px; background: rgba(29,29,27,.045); font-size: 9px; text-align: center; }
       .help-design-page .help-role-note { display: flex; align-items: flex-start; gap: 10px; margin-top: 17px; padding: 15px 11px 3px; border-top: 1px solid rgba(29,29,27,.08); }
       .help-role-note > span { width: 29px; height: 29px; display: grid; flex: 0 0 29px; place-items: center; border-radius: 8px; color: #f36a15; background: rgba(243,106,21,.07); }
