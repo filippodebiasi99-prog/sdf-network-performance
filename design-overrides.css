@@ -1240,6 +1240,19 @@
         white-space: nowrap;
       }
       .analysis-summary-strip article > small { margin-top: 10px; color: #747572; font-size: 11px; line-height: 1.35; }
+      .analysis-summary-strip .analysis-stat-dealer {
+        display: block;
+        margin-top: 5px;
+        overflow: hidden;
+        font-size: 10px;
+        font-style: normal;
+        font-weight: 500;
+        line-height: 1.35;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .analysis-summary-strip .analysis-stat-dealer.is-min { color: var(--danger); }
+      .analysis-summary-strip .analysis-stat-dealer.is-max { color: var(--success); }
       .analysis-stat-heading { display: flex; align-items: center; gap: 10px; color: #747572; font-size: 11px; }
       .analysis-stat-icon {
         width: 34px;

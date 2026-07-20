@@ -34,3 +34,10 @@ test("closed questionnaires clearly explain read-only state and keep completed v
   assert.match(overrides,/\.survey-readonly-notice\.status-complete/);
   assert.match(overrides,/\.input-with-unit input\[readonly\]/);
 });
+
+test("KPI extrema preserve their descriptions and identify dealers semantically",()=>{
+  assert.match(portal,/Valore più basso osservato<\/small><em class="analysis-stat-dealer is-min"/);
+  assert.match(portal,/Valore più alto osservato<\/small><em class="analysis-stat-dealer is-max"/);
+  assert.match(overrides,/\.analysis-stat-dealer\.is-min \{ color: var\(--danger\)/);
+  assert.match(overrides,/\.analysis-stat-dealer\.is-max \{ color: var\(--success\)/);
+});
