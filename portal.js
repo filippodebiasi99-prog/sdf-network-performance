@@ -477,13 +477,27 @@
     return `<div class="table-wrap"><table class="dealers-table"><thead><tr><th>Concessionario</th><th>Campagna</th><th>Stato</th><th>Ultimo invio</th><th>Azioni</th></tr></thead><tbody>${list.map((dealer) => `<tr data-dealer-row="${escapeHtml(dealer.id)}"><td><button class="dealer-name dealer-link" data-dealer-id="${escapeHtml(dealer.id)}">${escapeHtml(dealer.name)}<small>${escapeHtml(dealer.id)} · ${escapeHtml(dealer.region)}</small></button></td><td>${escapeHtml(state.overview.campaign.name)}</td><td>${collectionStatusBadge(dealer.collection_status)}</td><td>${formatDate(dealer.submitted_at,true)}</td><td><div class="dealer-row-actions row-actions">${state.role === "JET"?`<button class="button compact" data-copy-link="${escapeHtml(dealer.id)}">Copia link</button><button class="button compact" data-show-qr="${escapeHtml(dealer.id)}">QR</button>`:""}<button class="dealer-open row-action" data-dealer-id="${escapeHtml(dealer.id)}" aria-label="Apri la scheda di ${escapeHtml(dealer.name)}"><span>Apri scheda</span>${icon("chevron")}</button></div></td></tr>`).join("")}</tbody></table></div><footer class="dealer-pagination"><span>Visualizzati ${list.length} concessionari</span><nav class="dealer-page-controls" aria-label="Paginazione concessionari"><button class="dealer-page-button is-current" type="button" aria-current="page">1</button></nav></footer>`;
   }
 
-  function syncDealerStickyOffsets() {
-    const page=main.querySelector(".dealers-design-page");
-    const toolbar=page?.querySelector(".dealer-toolbar");
-    if (!page || !toolbar) return;
-    const shellHeight=(document.querySelector(".topbar")?.offsetHeight || 0)+(document.querySelector(".app-demo-banner")?.offsetHeight || 0);
-    page.style.setProperty("--dealer-sticky-shell",`${shellHeight}px`);
-    page.style.setProperty("--dealer-sticky-toolbar",`${toolbar.offsetHeight}px`);
+  function bindDealerScrollHandoff() {
+    const scroller=main.querySelector(".dealers-table-panel #dealer-results .table-wrap");
+    if (!scroller || scroller.dataset.scrollHandoff) return;
+    scroller.dataset.scrollHandoff="true";
+    const pageAtBottom=()=>window.scrollY+window.innerHeight>=document.documentElement.scrollHeight-2;
+    const handoff=(delta,event)=>{
+      if ((delta>0&&!pageAtBottom()) || (delta<0&&scroller.scrollTop<=0)) {
+        event.preventDefault();
+        window.scrollBy({top:delta,left:0,behavior:"instant"});
+      }
+    };
+    scroller.addEventListener("wheel",(event)=>handoff(event.deltaY,event),{passive:false});
+    let previousTouchY=null;
+    scroller.addEventListener("touchstart",(event)=>{previousTouchY=event.touches[0]?.clientY ?? null},{passive:true});
+    scroller.addEventListener("touchmove",(event)=>{
+      const currentY=event.touches[0]?.clientY;
+      if (previousTouchY===null || currentY===undefined) return;
+      const delta=previousTouchY-currentY;
+      previousTouchY=currentY;
+      handoff(delta,event);
+    },{passive:false});
   }
 
   function portalDealerDetailPage() {
@@ -728,7 +742,6 @@
     enhanceSelects(document);
     bindPageEvents();
     bindFunctionalEvents();
-    requestAnimationFrame(syncDealerStickyOffsets);
     updateNavigation(page === "dealer" ? "dealers" : publicPage ? "" : page);
     document.querySelector("#mobile-page-title").textContent = ({overview:"Overview",dealers:"Concessionari",dealer:"Dettaglio concessionario",analysis:"Analisi KPI",surveys:"Rilevazioni",reports:"Report",help:"Centro assistenza",survey:"Compilazione KPI",collection:"Compilazione",confirmation:"Conferma"})[page] || "Portale KPI";
     clearInterval(state.poller);
@@ -760,6 +773,7 @@
       selectedDealer=dealers.find((dealer)=>dealer.id===row.dataset.dealerRow) || {id:row.dataset.dealerRow};
       portalRenderPage("dealer",{dealer:selectedDealer});
     }));
+    bindDealerScrollHandoff();
     const portalFilter = () => {
       const search = main.querySelector("#dealer-search");
       if (!search || !main.querySelector("#dealer-results")) return;
@@ -772,7 +786,6 @@
       main.querySelector("#dealer-results").innerHTML = portalDealerResults(filtered);
       hydrateIcons(main.querySelector("#dealer-results"));
       bindFunctionalEvents();
-      requestAnimationFrame(syncDealerStickyOffsets);
     };
     main.querySelector("#dealer-search")?.addEventListener("input",portalFilter);
     main.querySelector("#region-filter")?.addEventListener("change",portalFilter);
@@ -967,7 +980,6 @@
   renderPage = portalRenderPage;
 
   document.querySelector("#help-center-button")?.addEventListener("click",()=>portalRenderPage("help"));
-  window.addEventListener("resize",syncDealerStickyOffsets);
 
   document.querySelector("#demo-role-select")?.addEventListener("change",async(event)=>{
     state.role=event.target.value === "SDF" ? "SDF" : "JET";
