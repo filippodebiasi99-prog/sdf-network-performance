@@ -284,7 +284,7 @@
         cursor: pointer;
         transition: color .16s ease, border-color .16s ease, background-color .16s ease;
       }
-      .analysis-pill .pill-chevron { width: 14px; height: 14px; display: block; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+      .analysis-pill > svg { width: 14px; height: 14px; display: block; flex: 0 0 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
       .analysis-pill:hover { color: #f36a15; border-color: #f36a15; background: rgba(243,106,21,.05); }
       #fatturato-dealer .panel-header { min-height: 78px; padding: 16px 20px; }
       #fatturato-dealer .panel-body { padding: 10px 20px; }
