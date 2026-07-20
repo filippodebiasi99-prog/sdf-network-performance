@@ -1693,7 +1693,8 @@
       .analysis-dealer-column-grid i:nth-child(2) { top: 50%; }
       .analysis-dealer-column-grid i:last-child { bottom: 0; }
       .analysis-dealer-average-line { position: absolute; z-index: 3; left: 0; right: 0; height: 0; border-top: 1px dashed rgba(29,29,27,.48); pointer-events: none; }
-      .analysis-dealer-average-line span { position: absolute; right: 0; bottom: 5px; padding-left: 6px; color: #5e605d; background: #fff; font-size: 9px; font-weight: 500; white-space: nowrap; }
+      .analysis-dealer-average-line span { position: absolute; right: 0; top: 0; padding: 2px 0 2px 8px; color: #747572; background: #fff; font-size: 9px; line-height: 1; font-weight: 400; white-space: nowrap; transform: translateY(-50%); }
+      .analysis-dealer-average-line strong { color: #1d1d1b; font-weight: 500; }
       .analysis-dealer-columns { position: absolute; z-index: 2; inset: 0; display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 14px; margin: 0; padding: 0 6px; list-style: none; }
       .analysis-dealer-columns li { min-width: 0; display: grid; grid-template-rows: 60px 194px 72px; }
       .analysis-dealer-column-value { display: flex; align-items: center; justify-content: flex-end; flex-direction: column; gap: 5px; padding-bottom: 8px; text-align: center; }
