@@ -498,21 +498,21 @@
       }
     };
     let wheelStopsAtTop=false;
-    let wheelReleaseTimer=null;
-    const releaseWheelStop=()=>{
-      clearTimeout(wheelReleaseTimer);
-      wheelReleaseTimer=setTimeout(()=>{wheelStopsAtTop=false},70);
-    };
+    let previousWheelAt=0;
     scroller.addEventListener("wheel",(event)=>{
+      const now=performance.now();
+      const startsNewGesture=now-previousWheelAt>100;
+      previousWheelAt=now;
       if (event.deltaY<0 && scroller.scrollTop>0) {
         wheelStopsAtTop=true;
-        releaseWheelStop();
         return;
       }
       if (event.deltaY<0 && scroller.scrollTop<=0 && wheelStopsAtTop) {
-        event.preventDefault();
-        releaseWheelStop();
-        return;
+        if (!startsNewGesture) {
+          event.preventDefault();
+          return;
+        }
+        wheelStopsAtTop=false;
       }
       if (event.deltaY>0) wheelStopsAtTop=false;
       handoff(event.deltaY,event);
