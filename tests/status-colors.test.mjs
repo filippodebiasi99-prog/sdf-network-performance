@@ -50,3 +50,16 @@ test("the top-five chart opens a complete accessible dealer comparison list",()=
   assert.match(portal,/open-analysis-dealers"\)\?\.addEventListener\("click"/);
   assert.match(overrides,/\.analysis-dealer-full-list li/);
 });
+
+test("every truncated overview list exposes its complete dataset",()=>{
+  assert.match(portal,/id="open-overview-leaders">Vedi tutti/);
+  assert.match(portal,/id="open-overview-priority">Vedi tutti/);
+  assert.match(portal,/id="open-overview-recent">Vedi tutti/);
+  assert.match(portal,/id="overview-leaders-dialog"/);
+  assert.match(portal,/id="overview-priority-dialog"/);
+  assert.match(portal,/id="overview-recent-dialog"/);
+  assert.match(portal,/performance\.dealerComparison\.map/);
+  assert.match(portal,/alertsAll\.map/);
+  assert.match(portal,/recentAll\.map/);
+  assert.match(overrides,/\.overview-complete-list li/);
+});

@@ -439,6 +439,11 @@ function overviewPayload(database, campaignId) {
   const companyRevenueRows = performanceRows.filter((row) => row.code === "company_revenue_total" && Number.isFinite(row.value));
   const partsRevenueRows = performanceRows.filter((row) => row.code === "parts_revenue_total" && Number.isFinite(row.value));
   const partsRevenueAverage = partsRevenueRows.length ? partsRevenueRows.reduce((sum,row) => sum + row.value,0) / partsRevenueRows.length : null;
+  const partsRevenueByDealer = new Map(partsRevenueRows.map((row) => [row.id,row]));
+  const partsRevenueComparison = rows.map((dealer) => {
+    const result=partsRevenueByDealer.get(dealer.id);
+    return { id:dealer.id,name:dealer.name,initials:dealer.initials,region:dealer.region,area:dealer.area,value:result?.value ?? null,collection_status:dealer.collection_status };
+  }).sort((a,b) => (a.value === null)-(b.value === null) || (b.value ?? 0)-(a.value ?? 0) || a.name.localeCompare(b.name)).map((row,index) => ({ ...row,position:row.value === null ? null : index+1,deltaFromAverage:row.value !== null && partsRevenueAverage ? (row.value-partsRevenueAverage)/partsRevenueAverage*100 : null }));
   const performance = {
     metrics:[
       metricSummary("company_revenue_total"),
@@ -448,6 +453,7 @@ function overviewPayload(database, campaignId) {
       metricSummary("inventory_end_value")
     ],
     leaders:[...partsRevenueRows].sort((a,b) => b.value-a.value).slice(0,5).map((row,index) => ({ id:row.id,name:row.dealer_name,initials:row.initials,region:row.region,area:row.area,value:row.value,position:index+1,deltaFromAverage:partsRevenueAverage ? (row.value-partsRevenueAverage)/partsRevenueAverage*100 : null })),
+    dealerComparison:partsRevenueComparison,
     areas:[...new Set(companyRevenueRows.map((row) => row.area))].map((area) => {
       const scoped=companyRevenueRows.filter((row) => row.area === area);
       return { area,count:scoped.length,average:scoped.reduce((sum,row) => sum+row.value,0)/scoped.length };
@@ -455,12 +461,14 @@ function overviewPayload(database, campaignId) {
     sample:companyRevenueRows.length
   };
   const alertOrder={NEEDS_REVIEW:0,DRAFT:1,REOPENED:1,NOT_STARTED:2};
+  const recentAll=rows.filter((row) => ["SUBMITTED","VALIDATED","NEEDS_REVIEW"].includes(row.collection_status)).sort((a,b) => String(b.updated_at).localeCompare(String(a.updated_at)));
+  const alertsAll=rows.filter((row) => ["NEEDS_REVIEW","DRAFT","REOPENED","NOT_STARTED"].includes(row.collection_status)).sort((a,b) => alertOrder[a.collection_status]-alertOrder[b.collection_status] || a.name.localeCompare(b.name));
   return {
     campaign,
     totals: { dealers: rows.length, received, completed, submitted,validated,drafts,reopened,notStarted,missing: rows.length - received, verify, completion: rows.length ? Math.round(received / rows.length * 100) : 0 },
     areas, timeline,performance,
-    recent: rows.filter((row) => ["SUBMITTED","VALIDATED","NEEDS_REVIEW"].includes(row.collection_status)).sort((a,b) => String(b.updated_at).localeCompare(String(a.updated_at))).slice(0,4),
-    alerts: rows.filter((row) => ["NEEDS_REVIEW","DRAFT","REOPENED","NOT_STARTED"].includes(row.collection_status)).sort((a,b) => alertOrder[a.collection_status]-alertOrder[b.collection_status]).slice(0,5),
+    recent:recentAll.slice(0,4),recentAll,
+    alerts:alertsAll.slice(0,5),alertsAll,
     syncErrors: COLLECTION_MODE === "jotform" ? database.prepare("SELECT COUNT(*) AS count FROM jotform_submissions WHERE campaign_id=? AND sync_status='ERROR'").get(campaign.id).count : 0
   };
 }

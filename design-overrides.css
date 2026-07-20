@@ -1397,6 +1397,50 @@
       .analysis-dealer-full-list li.is-missing .analysis-dealer-full-rank,
       .analysis-dealer-full-list li.is-missing .analysis-dealer-full-value,
       .analysis-dealer-full-list li.is-missing .analysis-dealer-full-delta { color: #9a9b98; }
+      .overview-complete-dialog {
+        width: min(860px,calc(100vw - 32px));
+        max-height: min(88dvh,820px);
+        padding: 0;
+        overflow: hidden;
+        border: 0;
+        border-radius: 20px;
+        background: #fff;
+        box-shadow: 0 30px 90px rgba(10,14,20,.26);
+      }
+      .overview-complete-dialog::backdrop { background: rgba(10,14,20,.48); backdrop-filter: blur(3px); }
+      .overview-complete-dialog .review-dialog-header { padding: 22px 24px 18px; }
+      .overview-complete-head,
+      .overview-complete-list li {
+        display: grid;
+        grid-template-columns: minmax(250px,1fr) 190px 120px;
+        gap: 18px;
+        align-items: center;
+      }
+      .overview-complete-head {
+        padding: 11px 24px;
+        border-bottom: 1px solid rgba(29,29,27,.08);
+        color: #777b80;
+        background: #f7f7f5;
+        font-size: 10px;
+        font-weight: 500;
+        letter-spacing: .05em;
+        text-transform: uppercase;
+      }
+      .overview-complete-list {
+        max-height: calc(88dvh - 154px);
+        margin: 0;
+        padding: 0 24px 16px;
+        overflow: auto;
+        list-style: none;
+      }
+      .overview-complete-list li { min-height: 62px; border-bottom: 1px solid rgba(29,29,27,.075); }
+      .overview-complete-list li:last-child { border-bottom: 0; }
+      .overview-complete-name strong,
+      .overview-complete-name small { display: block; }
+      .overview-complete-name strong { font-size: 13px; font-weight: 500; }
+      .overview-complete-name small { margin-top: 4px; color: #777b80; font-size: 10px; }
+      .overview-complete-detail { color: #55585b; font-size: 12px; }
+      .overview-complete-list .badge { justify-self: end; }
       .analysis-design-page .analysis-ranking-position {
         width: 28px;
         height: 28px;
@@ -2604,4 +2648,18 @@
         .analysis-dealer-full-value { grid-column: 2; grid-row: 2; text-align: left; }
         .analysis-dealer-full-delta { grid-column: 3; grid-row: 2; }
         .analysis-dealer-full-list .badge { grid-column: 3; grid-row: 1; }
+        .overview-complete-dialog { width: calc(100vw - 20px); max-height: 90dvh; border-radius: 18px; }
+        .overview-complete-dialog .review-dialog-header { padding: 19px 18px 16px; }
+        .overview-complete-head { display: none; }
+        .overview-complete-list { max-height: calc(90dvh - 112px); padding: 0 18px 14px; }
+        .overview-complete-list li {
+          min-height: 76px;
+          grid-template-columns: minmax(0,1fr) auto;
+          grid-template-rows: auto auto;
+          gap: 6px 10px;
+          padding: 12px 0;
+        }
+        .overview-complete-name { grid-column: 1; grid-row: 1; }
+        .overview-complete-detail { grid-column: 1; grid-row: 2; }
+        .overview-complete-list .badge { grid-column: 2; grid-row: 1 / 3; }
       }

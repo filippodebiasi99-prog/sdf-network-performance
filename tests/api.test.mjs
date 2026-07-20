@@ -32,6 +32,12 @@ test("health and overview are calculated from SQLite", async () => {
   assert.equal(overview.performance.sample,48);
   assert.equal(overview.performance.metrics.length,5);
   assert.equal(overview.performance.leaders.length,5);
+  assert.equal(overview.performance.dealerComparison.length,64);
+  assert.equal(overview.performance.dealerComparison.filter((dealer)=>dealer.value !== null).length,48);
+  assert.equal(overview.recent.length,4);
+  assert.equal(overview.recentAll.length,48);
+  assert.equal(overview.alerts.length,5);
+  assert.equal(overview.alertsAll.length,20);
   assert.ok(overview.performance.leaders[0].value>=overview.performance.leaders[1].value);
   assert.deepEqual(overview.performance.metrics.map((metric) => metric.code),["company_revenue_total","sdf_parts_revenue_total","parts_revenue_total","inventory_turnover","inventory_end_value"]);
   assert.ok(overview.performance.metrics.every((metric) => Number.isFinite(metric.value)));
