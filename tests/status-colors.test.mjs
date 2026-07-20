@@ -23,3 +23,14 @@ test("status colors stay consistent across badges, details and summaries",()=>{
   assert.match(overrides,/\.summary-cell\.status-draft \{ background: var\(--danger\)/);
   assert.match(overrides,/\.summary-cell\.status-missing \{ background: #747572/);
 });
+
+test("closed questionnaires clearly explain read-only state and keep completed values countable",()=>{
+  assert.match(portal,/locked\?"Visualizza compilazione":"Apri compilazione"/);
+  assert.match(portal,/Compilazione validata · sola lettura/);
+  assert.match(portal,/JET deve riaprire la compilazione dalla scheda concessionario/);
+  assert.match(portal,/readonly aria-readonly="true"/);
+  assert.match(portal,/Riapri per modificare/);
+  assert.match(portal,/Link in sola lettura/);
+  assert.match(overrides,/\.survey-readonly-notice\.status-complete/);
+  assert.match(overrides,/\.input-with-unit input\[readonly\]/);
+});
