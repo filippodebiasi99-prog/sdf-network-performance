@@ -2054,3 +2054,102 @@
 
       /* Card titles share one medium weight across every portal section. */
       .panel .panel-header h2 { font-weight: 500 !important; }
+
+      /* Centro assistenza: ricerca e procedure nello stesso sistema visivo del portale. */
+      .help-design-page { max-width: none; }
+      .help-design-page .help-hero {
+        min-height: 182px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 28px;
+        padding: 30px 34px;
+        overflow: hidden;
+        border: 1px solid rgba(243,106,21,.07);
+        border-radius: 22px;
+        background: #fff url("/assets/card1.png") center / cover no-repeat;
+        box-shadow: 0 12px 30px rgba(29,29,27,.045);
+      }
+      .help-hero-copy { max-width: 680px; }
+      .help-hero .eyebrow { display: flex; align-items: center; gap: 10px; margin-bottom: 13px; color: #f36a15; }
+      .help-hero .eyebrow svg { width: 22px; height: 22px; }
+      .help-hero h1 { margin-bottom: 10px; font-size: clamp(38px,3.5vw,52px); line-height: 1; font-weight: 500; letter-spacing: -.05em; }
+      .help-hero .page-subtitle { color: #687181; font-size: 14px; }
+      .help-hero-count { min-width: 132px; display: grid; justify-items: center; gap: 5px; padding: 15px 18px; border: 1px solid rgba(243,106,21,.22); border-radius: 14px; color: #f36a15; background: rgba(255,255,255,.88); }
+      .help-hero-count strong { font-size: 28px; line-height: 1; font-weight: 500; letter-spacing: -.03em; }
+      .help-hero-count span { color: #747572; font-size: 10px; }
+      .help-design-page .help-search-panel { grid-template-columns: minmax(0,1.45fr) minmax(240px,.55fr); gap: 22px; margin: 18px 0 24px; padding: 18px; border-radius: 18px; box-shadow: 0 12px 28px rgba(29,29,27,.04); }
+      .help-design-page .help-search-field { min-width: 0; min-height: 52px; grid-template-columns: 21px minmax(0,1fr) auto; padding: 0 15px; border-color: rgba(29,29,27,.11); border-radius: 12px; background: #fafaf9; }
+      .help-design-page .help-search-field input { min-width: 0; height: 50px; font-size: 13px; }
+      .help-design-page .help-search-field kbd { padding: 4px 7px; border: 1px solid rgba(29,29,27,.08); border-radius: 6px; background: #fff; font-size: 9px; }
+      .help-design-page .help-search-panel > p { display: grid; gap: 5px; }
+      .help-design-page .help-search-panel > p strong { color: #1d1d1b; font-size: 12px; font-weight: 500; }
+      .help-design-page .help-search-panel > p span { color: #747572; font-size: 10px; line-height: 1.45; }
+      .help-design-page .help-layout { grid-template-columns: 250px minmax(0,1fr); align-items: start; gap: 14px; }
+      .help-design-page .help-sidebar { top: 92px; padding: 18px; border-radius: 18px; box-shadow: 0 12px 28px rgba(29,29,27,.04); }
+      .help-sidebar-heading { display: flex; align-items: center; gap: 11px; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid rgba(29,29,27,.08); }
+      .help-sidebar-heading > span { width: 38px; height: 38px; display: grid; flex: 0 0 38px; place-items: center; border-radius: 11px; color: #f36a15; background: rgba(243,106,21,.08); }
+      .help-sidebar-heading svg { width: 18px; height: 18px; }
+      .help-sidebar-heading .eyebrow { margin: 0 0 3px; font-size: 9px; }
+      .help-sidebar-heading h2 { margin: 0; font-size: 19px; line-height: 1; font-weight: 500; }
+      .help-design-page .help-sidebar nav { gap: 4px; }
+      .help-design-page .help-sidebar nav button { min-height: 43px; padding: 0 11px; border-radius: 9px; font-size: 12px; }
+      .help-design-page .help-sidebar nav button:hover { background: #faf7f4; }
+      .help-design-page .help-sidebar nav button.is-active { color: #f36a15; background: rgba(243,106,21,.07); box-shadow: inset 3px 0 #f36a15; }
+      .help-design-page .help-sidebar nav small { min-width: 22px; padding: 3px 5px; border-radius: 6px; background: rgba(29,29,27,.045); font-size: 9px; text-align: center; }
+      .help-design-page .help-role-note { display: flex; align-items: flex-start; gap: 10px; margin-top: 17px; padding: 15px 11px 3px; border-top: 1px solid rgba(29,29,27,.08); }
+      .help-role-note > span { width: 29px; height: 29px; display: grid; flex: 0 0 29px; place-items: center; border-radius: 8px; color: #f36a15; background: rgba(243,106,21,.07); }
+      .help-role-note svg { width: 14px; height: 14px; }
+      .help-design-page .help-role-note strong { font-size: 11px; font-weight: 500; }
+      .help-design-page .help-role-note p { margin-top: 5px; font-size: 9px; line-height: 1.5; }
+      .help-design-page .help-content { width: 100%; min-width: 0; overflow: hidden; border-radius: 18px; box-shadow: 0 12px 28px rgba(29,29,27,.04); }
+      .help-design-page .help-content-heading { min-height: 88px; align-items: center; padding: 18px 22px; }
+      .help-design-page .help-content-heading .eyebrow { margin-bottom: 6px; font-size: 10px; }
+      .help-design-page .help-content-heading h2 { font-size: 24px; font-weight: 500; letter-spacing: -.025em; }
+      .help-design-page .help-content-heading > span { padding: 6px 9px; border: 1px solid rgba(29,29,27,.08); border-radius: 8px; background: #fafaf9; font-size: 10px; }
+      .help-design-page .help-guide { margin: 0 20px; }
+      .help-design-page .help-guide:last-of-type { border-bottom: 0; }
+      .help-design-page .help-guide summary { min-height: 100px; grid-template-columns: 34px minmax(0,1fr) 34px; gap: 14px; padding: 18px 2px; }
+      .help-design-page .help-guide summary > span:nth-child(2) { min-width: 0; }
+      .help-design-page .help-guide summary small { font-size: 9px; font-weight: 500; letter-spacing: .07em; }
+      .help-design-page .help-guide summary strong { font-size: 16px; font-weight: 500; letter-spacing: -.015em; }
+      .help-design-page .help-guide summary em { min-width: 0; font-size: 11px; line-height: 1.45; overflow-wrap: anywhere; }
+      .help-design-page .help-guide-index { font-size: 10px; }
+      .help-design-page .help-guide-toggle { width: 32px; height: 32px; border-radius: 10px; }
+      .help-design-page .help-guide[open] { margin: 0; padding: 0 20px; border-left: 3px solid #f36a15; background: rgba(243,106,21,.025); }
+      .help-design-page .help-guide[open] .help-guide-toggle { border-color: rgba(243,106,21,.3); background: #fff; }
+      .help-design-page .help-guide-body { padding: 2px 44px 24px 48px; }
+      .help-design-page .help-guide-body ol { gap: 10px; margin-bottom: 19px; }
+      .help-design-page .help-guide-body li { min-height: 26px; padding-left: 36px; font-size: 11px; line-height: 1.55; }
+      .help-design-page .help-guide-body li::before { width: 24px; height: 24px; border-radius: 7px; color: #f36a15; background: #fff; font-size: 9px; }
+      .help-design-page .help-guide-body .button { min-height: 40px; margin-left: 36px; border-radius: 10px; color: #f36a15; font-size: 11px; font-weight: 500; }
+      .help-design-page .help-empty { padding: 48px 24px; }
+      .help-design-page .help-empty h2 { font-weight: 500; }
+
+      @media (max-width: 900px) {
+        .help-design-page .help-layout { grid-template-columns: 1fr; }
+        .help-design-page .help-sidebar { position: static; padding: 12px; overflow-x: auto; }
+        .help-sidebar-heading,.help-design-page .help-role-note { display: none; }
+        .help-design-page .help-sidebar nav { width: max-content; display: flex; }
+        .help-design-page .help-sidebar nav button { min-width: max-content; }
+      }
+      @media (max-width: 760px) {
+        .help-design-page { width: 100%; max-width: 100%; overflow: hidden; }
+        .help-design-page .help-hero { min-height: 0; align-items: flex-start; flex-direction: column; gap: 22px; padding: 25px 22px; border-radius: 20px; background-position: 57% center; }
+        .help-hero h1 { font-size: 40px; }
+        .help-hero .page-subtitle { max-width: 285px; line-height: 1.5; }
+        .help-hero-count { min-width: 112px; justify-items: start; padding: 12px 15px; }
+        .help-design-page .help-search-panel { grid-template-columns: 1fr; gap: 10px; padding: 14px; }
+        .help-design-page .help-search-panel > p { display: none; }
+        .help-design-page .help-search-field { grid-template-columns: 18px minmax(0,1fr); }
+        .help-design-page .help-search-field kbd { display: none; }
+        .help-design-page .help-content-heading { min-height: 78px; padding: 16px 17px; }
+        .help-design-page .help-content-heading h2 { font-size: 21px; }
+        .help-design-page .help-guide { margin-inline: 15px; }
+        .help-design-page .help-guide[open] { padding-inline: 15px; }
+        .help-design-page .help-guide summary { min-height: 108px; grid-template-columns: 25px minmax(0,1fr) 32px; gap: 9px; }
+        .help-design-page .help-guide summary strong { font-size: 15px; }
+        .help-design-page .help-guide-body { padding: 0 2px 22px 34px; }
+        .help-design-page .help-guide-body li { padding-left: 32px; }
+        .help-design-page .help-guide-body .button { width: 100%; margin-left: 0; }
+      }
