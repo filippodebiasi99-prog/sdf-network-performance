@@ -72,3 +72,11 @@ test("regional analysis stays capped at eight rows and exposes overflow",()=>{
   assert.match(portal,/open-analysis-regions"\)\?\.addEventListener\("click"/);
   assert.match(overrides,/\.analysis-region-full-list li/);
 });
+
+test("dealer table gives the primary action a clear label and balanced columns",()=>{
+  assert.match(portal,/<span>Apri scheda<\/span>\$\{icon\("chevron"\)\}/);
+  assert.match(portal,/aria-label="Apri la scheda di/);
+  assert.match(overrides,/\.dealers-table th:nth-child\(1\) \{ width: 30%; \}/);
+  assert.match(overrides,/\.dealers-table th:nth-child\(5\) \{ width: 18%; \}/);
+  assert.match(overrides,/\.dealer-open \{ width: auto;/);
+});
