@@ -1807,3 +1807,6 @@
         .analysis-design-page .analysis-ranking-list { grid-template-columns: 1fr; }
         .analysis-design-page .analysis-ranking-list li { min-height: 86px; border-right: 0; }
       }
+
+      /* Card titles share one medium weight across every portal section. */
+      .panel .panel-header h2 { font-weight: 500 !important; }
