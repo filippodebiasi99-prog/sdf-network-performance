@@ -1096,8 +1096,23 @@
         .dealer-detail-page > .page-header .header-actions { max-width: none; justify-content: flex-start; }
       }
       @media (min-width: 1181px) {
-        .dealer-detail-page .dealer-hero h1 { white-space: nowrap; }
-        .dealer-detail-page > .page-header .header-actions { flex: 0 0 auto; }
+        .dealer-detail-page > .page-header {
+          display: grid;
+          grid-template-columns: minmax(0,1fr) minmax(390px,510px);
+          gap: 24px;
+        }
+        .dealer-detail-page .dealer-hero,
+        .dealer-detail-page .dealer-hero > div:last-child { min-width: 0; }
+        .dealer-detail-page .dealer-hero h1 {
+          max-width: 100%;
+          overflow-wrap: break-word;
+          white-space: normal;
+        }
+        .dealer-detail-page > .page-header .header-actions {
+          width: 100%;
+          max-width: none;
+          flex-wrap: wrap;
+        }
       }
       @media (max-width: 760px) {
         .dealer-detail-page .breadcrumbs { margin-left: 0; }
