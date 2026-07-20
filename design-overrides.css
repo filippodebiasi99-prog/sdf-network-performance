@@ -1823,5 +1823,123 @@
         .analysis-design-page .analysis-ranking-list li { min-height: 86px; border-right: 0; }
       }
 
+      /* Rilevazioni: stessa gerarchia visiva di Overview, Concessionari e Analisi KPI. */
+      .surveys-design-page .surveys-hero {
+        min-height: 182px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 28px;
+        padding: 30px 34px;
+        overflow: hidden;
+        border: 1px solid rgba(243,106,21,.07);
+        border-radius: 22px;
+        background: #fff url("/assets/card1.png") center / cover no-repeat;
+        box-shadow: 0 12px 30px rgba(29,29,27,.045);
+      }
+      .surveys-hero-copy { max-width: 620px; }
+      .surveys-hero .eyebrow { display: flex; align-items: center; gap: 10px; margin-bottom: 13px; color: #f36a15; }
+      .surveys-hero .eyebrow svg { width: 22px; height: 22px; }
+      .surveys-hero h1 { margin-bottom: 10px; font-size: clamp(38px,3.5vw,52px); line-height: 1; font-weight: 500; letter-spacing: -.05em; }
+      .surveys-hero .page-subtitle { color: #687181; font-size: 14px; }
+      .surveys-hero-actions { display: flex; align-items: center; justify-content: flex-end; gap: 9px; }
+      .surveys-hero-actions .button { min-height: 48px; border-radius: 13px; }
+      .surveys-hero-actions .surveys-primary-action { padding: 0 20px; border-color: #f36a15; color: #fff; background: #f36a15; box-shadow: 0 9px 18px rgba(243,106,21,.18); }
+      .surveys-hero-actions .surveys-primary-action:hover { color: #fff; border-color: #d9570e; background: #d9570e; }
+      .surveys-hero-actions svg { width: 16px; height: 16px; }
+      .surveys-summary {
+        display: grid;
+        grid-template-columns: 1.35fr 1fr 1fr;
+        margin: 18px 0 24px;
+        overflow: hidden;
+        border: 1px solid rgba(29,29,27,.08);
+        border-radius: 18px;
+        background: #fff;
+        box-shadow: 0 12px 28px rgba(29,29,27,.04);
+      }
+      .surveys-summary article { min-width: 0; min-height: 112px; display: flex; align-items: center; gap: 14px; padding: 18px 20px; border-left: 1px solid rgba(29,29,27,.08); }
+      .surveys-summary article:first-child { border-left: 0; }
+      .surveys-summary-icon { width: 40px; height: 40px; display: grid; flex: 0 0 40px; place-items: center; border-radius: 11px; color: #f36a15; background: rgba(243,106,21,.08); }
+      .surveys-summary-icon svg { width: 19px; height: 19px; }
+      .surveys-summary small { display: block; color: #747572; font-size: 11px; line-height: 1.25; font-weight: 400; }
+      .surveys-summary strong { display: block; margin-top: 8px; overflow: hidden; font-size: 20px; line-height: 1.1; font-weight: 500; letter-spacing: -.025em; text-overflow: ellipsis; white-space: nowrap; }
+      .surveys-section-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin: 0 2px 14px; }
+      .surveys-section-heading .eyebrow { margin-bottom: 7px; }
+      .surveys-section-heading h2 { margin-bottom: 6px; font-size: 24px; font-weight: 500; }
+      .surveys-section-heading p { margin: 0; color: #747572; font-size: 12px; }
+      .surveys-section-heading > span { flex: 0 0 auto; padding: 7px 10px; border: 1px solid rgba(29,29,27,.09); border-radius: 9px; color: #747572; background: #fff; font-size: 11px; }
+      .surveys-campaign-list { gap: 14px; }
+      .surveys-campaign-card {
+        position: relative;
+        min-height: 184px;
+        grid-template-columns: minmax(260px,1.1fr) minmax(230px,.8fr) minmax(300px,.9fr);
+        gap: 28px;
+        overflow: hidden;
+        padding: 24px;
+        border-radius: 18px;
+        box-shadow: 0 12px 28px rgba(29,29,27,.04);
+      }
+      .surveys-campaign-card.is-active::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 4px; background: #f36a15; }
+      .surveys-campaign-main { min-width: 0; }
+      .surveys-campaign-topline { display: flex; align-items: center; gap: 10px; }
+      .surveys-campaign-topline > span:last-child { color: #747572; font-size: 11px; }
+      .surveys-campaign-card h2 { margin: 18px 0 9px; font-size: 24px; line-height: 1.1; font-weight: 500; letter-spacing: -.03em; }
+      .surveys-campaign-period { display: flex; align-items: center; gap: 7px; color: #747572; font-size: 11px; }
+      .surveys-campaign-period > span { width: 15px; height: 15px; display: grid; place-items: center; color: #f36a15; }
+      .surveys-campaign-period svg { width: 15px; height: 15px; }
+      .surveys-campaign-progress { min-width: 0; padding: 8px 0; }
+      .surveys-campaign-progress > div { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+      .surveys-campaign-progress > div > span { color: #747572; font-size: 11px; }
+      .surveys-campaign-progress > div > strong { font-size: 24px; line-height: 1; font-weight: 500; letter-spacing: -.03em; }
+      .surveys-progress-track { height: 7px; display: block; margin: 18px 0 12px; overflow: hidden; border-radius: 999px; background: repeating-linear-gradient(135deg,rgba(243,106,21,.24) 0 2px,transparent 2px 5px); }
+      .surveys-progress-track i { height: 100%; display: block; border-radius: inherit; background: #f36a15; }
+      .surveys-campaign-card:not(.is-active) .surveys-progress-track { background: repeating-linear-gradient(135deg,rgba(117,120,116,.20) 0 2px,transparent 2px 5px); }
+      .surveys-campaign-card:not(.is-active) .surveys-progress-track i { background: #8b8d89; }
+      .surveys-campaign-progress footer { display: flex; justify-content: space-between; gap: 12px; color: #747572; font-size: 10px; }
+      .surveys-campaign-progress footer strong { color: #1d1d1b; font-weight: 500; }
+      .surveys-campaign-card .campaign-actions { max-width: none; display: flex; align-items: stretch; flex-direction: column; gap: 9px; }
+      .surveys-campaign-card .campaign-dashboard { width: 100%; min-height: 42px; justify-content: space-between; padding: 0 14px; border-color: rgba(243,106,21,.45); border-radius: 11px; color: #f36a15; font-weight: 500; }
+      .surveys-campaign-card .campaign-dashboard:hover { border-color: #f36a15; background: rgba(243,106,21,.05); }
+      .surveys-campaign-card .campaign-dashboard svg { width: 14px; height: 14px; }
+      .campaign-secondary-actions { display: flex; flex-wrap: wrap; gap: 7px; }
+      .surveys-campaign-card .campaign-secondary-actions .button { min-height: 38px; flex: 1 1 auto; padding: 0 11px; border-radius: 10px; color: #5e605d; font-size: 11px; font-weight: 400; }
+      .surveys-campaign-card .campaign-secondary-actions .button:hover { color: #f36a15; }
+      .surveys-empty { min-height: 220px; display: grid; place-items: center; align-content: center; padding: 32px; text-align: center; }
+      .surveys-empty > span { width: 42px; height: 42px; display: grid; place-items: center; margin-bottom: 14px; border-radius: 12px; color: #f36a15; background: rgba(243,106,21,.08); }
+      .surveys-empty svg { width: 20px; height: 20px; }
+      .surveys-empty h2 { margin-bottom: 7px; font-weight: 500; }
+      .surveys-empty p { margin: 0; color: #747572; font-size: 12px; }
+
+      @media (max-width: 1180px) {
+        .surveys-campaign-card { grid-template-columns: minmax(260px,1fr) minmax(220px,.75fr); }
+        .surveys-campaign-card .campaign-actions { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(220px,.7fr) minmax(0,1fr); }
+        .campaign-secondary-actions { align-items: stretch; }
+      }
+      @media (max-width: 760px) {
+        .surveys-design-page { width: 100%; max-width: 100%; margin-right: 0; overflow: hidden; }
+        .surveys-design-page .surveys-hero { min-height: 0; align-items: flex-start; flex-direction: column; gap: 22px; padding: 25px 22px; border-radius: 20px; background-position: 57% center; }
+        .surveys-hero-copy { width: 100%; max-width: 100%; }
+        .surveys-hero h1 { font-size: 40px; }
+        .surveys-hero .page-subtitle { max-width: 285px; line-height: 1.5; }
+        .surveys-hero-actions,
+        .surveys-hero-actions .button { width: 100%; }
+        .surveys-summary { grid-template-columns: 1fr 1fr; border-radius: 18px; }
+        .surveys-summary article { min-height: 100px; padding: 15px; }
+        .surveys-summary article:first-child { grid-column: 1 / -1; border-bottom: 1px solid rgba(29,29,27,.08); }
+        .surveys-summary article:nth-child(2) { border-left: 0; }
+        .surveys-summary-icon { width: 36px; height: 36px; flex-basis: 36px; }
+        .surveys-summary strong { font-size: 17px; }
+        .surveys-summary article > div { min-width: 0; }
+        .surveys-summary small { overflow-wrap: anywhere; }
+        .surveys-section-heading { align-items: flex-start; }
+        .surveys-section-heading h2 { font-size: 21px; }
+        .surveys-section-heading > span { display: none; }
+        .surveys-campaign-card { min-height: 0; grid-template-columns: 1fr; gap: 22px; padding: 21px 18px; border-radius: 17px; }
+        .surveys-campaign-card h2 { font-size: 22px; }
+        .surveys-campaign-card .campaign-actions { grid-column: auto; display: flex; }
+        .campaign-secondary-actions { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); }
+        .surveys-campaign-card .campaign-secondary-actions .button { width: 100%; min-width: 0; padding-inline: 7px; }
+      }
+
       /* Card titles share one medium weight across every portal section. */
       .panel .panel-header h2 { font-weight: 500 !important; }
