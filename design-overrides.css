@@ -1715,48 +1715,34 @@
       .analysis-region-insights-body { flex: 1; display: flex; flex-direction: column; gap: 14px; padding: 16px; }
       .analysis-region-leader {
         position: relative;
-        min-height: 210px;
+        min-height: 196px;
         display: flex;
         align-items: stretch;
         overflow: hidden;
-        padding: 22px;
-        border: 1px solid rgba(243,106,21,.09);
-        border-radius: 14px;
-        background: linear-gradient(105deg,rgba(243,106,21,.07),rgba(243,106,21,.025));
-      }
-      .analysis-region-leader::after {
-        content: "";
-        position: absolute;
-        right: -44px;
-        bottom: -85px;
-        width: 280px;
-        height: 280px;
-        border: 1px solid rgba(243,106,21,.06);
-        border-radius: 48% 52% 42% 58%;
-        box-shadow: 0 0 0 24px rgba(243,106,21,.025),0 0 0 48px rgba(243,106,21,.018),0 0 0 72px rgba(243,106,21,.012);
-        transform: rotate(-18deg);
+        padding: 18px;
+        border: 1px solid rgba(29,29,27,.08);
+        border-radius: 12px;
+        background: rgba(243,106,21,.035);
       }
       .analysis-region-leader-copy { position: relative; z-index: 2; width: 58%; display: flex; align-items: flex-start; flex-direction: column; }
       .analysis-region-leader-kicker { display: flex; align-items: center; gap: 8px; color: #d9570e; font-size: 10px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; }
-      .analysis-region-leader-kicker i { width: 27px; height: 27px; display: grid; place-items: center; color: #f36a15; }
-      .analysis-region-leader-kicker svg { width: 100%; height: 100%; }
-      .analysis-region-leader-dash { width: 18px; height: 2px; margin-top: 12px; background: #f36a15; }
-      .analysis-region-leader-copy > strong { display: block; margin-top: 15px; font-size: clamp(29px,3vw,38px); line-height: .94; font-weight: 500; letter-spacing: -.045em; }
-      .analysis-region-leader-copy > b { display: block; margin-top: 12px; font-size: 20px; line-height: 1; font-weight: 400; letter-spacing: -.025em; }
-      .analysis-region-leader-copy > em { display: inline-flex; align-items: center; gap: 7px; margin-top: auto; padding: 8px 11px; border-radius: 999px; color: #258432; background: rgba(43,143,55,.09); font-size: 11px; font-style: normal; font-weight: 500; }
-      .analysis-region-leader-copy > em span { width: 21px; height: 21px; display: grid; place-items: center; border-radius: 50%; background: rgba(255,255,255,.75); font-size: 13px; }
-      .analysis-region-map { position: relative; z-index: 1; width: 42%; display: grid; place-items: center; margin: -22px -12px -22px 0; overflow: hidden; }
-      .analysis-region-map svg { width: 160px; height: 170px; overflow: visible; opacity: .64; filter: saturate(1.1); pointer-events: none; transform: rotate(-3deg); }
-      .analysis-region-insight-metrics { display: grid; grid-template-columns: 1fr 1fr; margin: 0; overflow: hidden; border: 1px solid rgba(29,29,27,.09); border-radius: 14px; }
-      .analysis-region-insight-metrics > div { min-width: 0; display: flex; align-items: center; gap: 12px; padding: 15px; }
+      .analysis-region-leader-kicker i { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 9px; color: #f36a15; background: rgba(243,106,21,.08); }
+      .analysis-region-leader-kicker svg { width: 16px; height: 16px; }
+      .analysis-region-leader-copy > strong { display: block; margin-top: 18px; font-size: clamp(27px,2.5vw,32px); line-height: 1; font-weight: 500; letter-spacing: -.035em; }
+      .analysis-region-leader-copy > b { display: block; margin-top: 10px; font-size: 18px; line-height: 1; font-weight: 400; letter-spacing: -.02em; }
+      .analysis-region-leader-copy > em { display: inline-flex; align-items: center; gap: 5px; margin-top: auto; padding: 5px 8px; border-radius: 7px; color: #258432; background: rgba(43,143,55,.09); font-size: 10px; font-style: normal; font-weight: 500; }
+      .analysis-region-leader-copy > em span { font-size: 11px; }
+      .analysis-region-map { position: relative; z-index: 1; width: 42%; display: grid; place-items: center; margin: -18px -10px -18px 0; overflow: hidden; }
+      .analysis-region-map svg { width: 145px; height: 154px; overflow: visible; opacity: .36; filter: saturate(.9); pointer-events: none; transform: rotate(-2deg); }
+      .analysis-region-insight-metrics { display: grid; grid-template-columns: 1fr 1fr; margin: 0; overflow: hidden; border: 1px solid rgba(29,29,27,.09); border-radius: 12px; }
+      .analysis-region-insight-metrics > div { min-width: 0; display: flex; align-items: center; gap: 10px; padding: 14px; }
       .analysis-region-insight-metrics > div + div { border-left: 1px solid rgba(29,29,27,.08); }
-      .analysis-region-metric-icon { width: 42px; height: 42px; display: grid; flex: 0 0 42px; place-items: center; border-radius: 50%; color: #f36a15; background: rgba(243,106,21,.07); }
-      .analysis-region-metric-icon svg { width: 21px; height: 21px; }
+      .analysis-region-metric-icon { width: 36px; height: 36px; display: grid; flex: 0 0 36px; place-items: center; border-radius: 10px; color: #f36a15; background: rgba(243,106,21,.07); }
+      .analysis-region-metric-icon svg { width: 18px; height: 18px; }
       .analysis-region-insight-metrics dt { color: #747572; font-size: 10px; font-weight: 400; }
       .analysis-region-insight-metrics dd { margin: 7px 0 0; font-size: 16px; line-height: 1.1; font-weight: 500; white-space: nowrap; }
-      .analysis-region-note { position: relative; min-height: 72px; display: flex; align-items: center; gap: 13px; margin: auto -16px -16px; padding: 14px 18px 14px 22px; border-top: 1px solid rgba(29,29,27,.06); background: rgba(29,29,27,.018); }
-      .analysis-region-note::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 3px; background: #f36a15; }
-      .analysis-region-note > span { width: 36px; height: 36px; display: grid; flex: 0 0 36px; place-items: center; border-radius: 50%; color: #f36a15; background: rgba(243,106,21,.06); }
+      .analysis-region-note { min-height: 66px; display: flex; align-items: center; gap: 12px; margin: auto 0 0; padding: 13px 14px; border: 1px solid rgba(29,29,27,.08); border-radius: 12px; background: #fff; }
+      .analysis-region-note > span { width: 34px; height: 34px; display: grid; flex: 0 0 34px; place-items: center; border-radius: 9px; color: #f36a15; background: rgba(243,106,21,.06); }
       .analysis-region-note svg { width: 18px; height: 18px; }
       .analysis-region-note p { min-width: 0; margin: 0; color: #5e605d; font-size: 10px; line-height: 1.55; overflow-wrap: anywhere; }
       .analysis-design-page .analysis-ranking-list {

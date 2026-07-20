@@ -366,8 +366,7 @@
             <div class="panel-body analysis-region-insights-body">
               <section class="analysis-region-leader" aria-label="Regione con la media KPI più alta">
                 <div class="analysis-region-leader-copy">
-                  <span class="analysis-region-leader-kicker"><i aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="5"/><path d="m9 14-1 7 4-2 4 2-1-7M10 9l1.2 1.2L14 7.5"/></svg></i>Regione in testa</span>
-                  <span class="analysis-region-leader-dash" aria-hidden="true"></span>
+                  <span class="analysis-region-leader-kicker"><i aria-hidden="true">${icon("trendUp")}</i>Regione in testa</span>
                   <strong>${topRegion?escapeHtml(topRegion.region):"—"}</strong>
                   <b>${topRegion?analysisValue(topRegion.average):"Nessun dato"}</b>
                   ${regionalDelta===null?"":`<em><span aria-hidden="true">↑</span> ${regionalDelta>=0?"+":""}${regionalDelta.toLocaleString("it-IT",{maximumFractionDigits:1})}% vs rete</em>`}
