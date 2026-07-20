@@ -488,16 +488,44 @@
         window.scrollBy({top:delta,left:0,behavior:"instant"});
       }
     };
-    scroller.addEventListener("wheel",(event)=>handoff(event.deltaY,event),{passive:false});
+    let wheelStopsAtTop=false;
+    let wheelReleaseTimer=null;
+    const releaseWheelStop=()=>{
+      clearTimeout(wheelReleaseTimer);
+      wheelReleaseTimer=setTimeout(()=>{wheelStopsAtTop=false},180);
+    };
+    scroller.addEventListener("wheel",(event)=>{
+      if (event.deltaY<0 && scroller.scrollTop>0) {
+        wheelStopsAtTop=true;
+        releaseWheelStop();
+        return;
+      }
+      if (event.deltaY<0 && scroller.scrollTop<=0 && wheelStopsAtTop) {
+        event.preventDefault();
+        releaseWheelStop();
+        return;
+      }
+      if (event.deltaY>0) wheelStopsAtTop=false;
+      handoff(event.deltaY,event);
+    },{passive:false});
     let previousTouchY=null;
-    scroller.addEventListener("touchstart",(event)=>{previousTouchY=event.touches[0]?.clientY ?? null},{passive:true});
+    let touchStopsAtTop=false;
+    scroller.addEventListener("touchstart",(event)=>{
+      previousTouchY=event.touches[0]?.clientY ?? null;
+      touchStopsAtTop=scroller.scrollTop>0;
+    },{passive:true});
     scroller.addEventListener("touchmove",(event)=>{
       const currentY=event.touches[0]?.clientY;
       if (previousTouchY===null || currentY===undefined) return;
       const delta=previousTouchY-currentY;
       previousTouchY=currentY;
+      if (delta<0 && scroller.scrollTop<=0 && touchStopsAtTop) {
+        event.preventDefault();
+        return;
+      }
       handoff(delta,event);
     },{passive:false});
+    scroller.addEventListener("touchend",()=>{previousTouchY=null;touchStopsAtTop=false},{passive:true});
   }
 
   function portalDealerDetailPage() {
