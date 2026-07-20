@@ -51,6 +51,7 @@ test("health and overview are calculated from SQLite", async () => {
   assert.equal(revenueAnalysis.dealerComparison.length,64);
   assert.equal(revenueAnalysis.dealerComparison.filter((dealer)=>dealer.value !== null).length,48);
   assert.equal(revenueAnalysis.dealerComparison.filter((dealer)=>dealer.value === null).length,16);
+  assert.equal(revenueAnalysis.regions.length,8);
   const turnoverAnalysis = await fetch(`${baseUrl}/api/analysis?kpiId=inventory_turnover`).then((response) => response.json());
   assert.equal(turnoverAnalysis.stats.primaryAggregation,"average");
   assert.equal(turnoverAnalysis.stats.primaryValue,turnoverAnalysis.stats.average);

@@ -63,3 +63,12 @@ test("every truncated overview list exposes its complete dataset",()=>{
   assert.match(portal,/recentAll\.map/);
   assert.match(overrides,/\.overview-complete-list li/);
 });
+
+test("regional analysis stays capped at eight rows and exposes overflow",()=>{
+  assert.match(portal,/const visibleRegions = data\.regions\.slice\(0,8\)/);
+  assert.match(portal,/const hasMoreRegions = data\.regions\.length > visibleRegions\.length/);
+  assert.match(portal,/id="open-analysis-regions">Vedi tutti/);
+  assert.match(portal,/id="analysis-region-dialog"/);
+  assert.match(portal,/open-analysis-regions"\)\?\.addEventListener\("click"/);
+  assert.match(overrides,/\.analysis-region-full-list li/);
+});

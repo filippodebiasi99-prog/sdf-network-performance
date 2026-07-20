@@ -1342,6 +1342,7 @@
         color: #d9570e;
         background: rgba(243,106,21,.07);
       }
+      .analysis-panel-actions { display: flex; align-items: center; gap: 10px; flex: 0 0 auto; }
       .analysis-dealer-dialog {
         width: min(1040px,calc(100vw - 32px));
         max-height: min(88dvh,900px);
@@ -1397,6 +1398,36 @@
       .analysis-dealer-full-list li.is-missing .analysis-dealer-full-rank,
       .analysis-dealer-full-list li.is-missing .analysis-dealer-full-value,
       .analysis-dealer-full-list li.is-missing .analysis-dealer-full-delta { color: #9a9b98; }
+      .analysis-region-full-head,
+      .analysis-region-full-list li {
+        display: grid;
+        grid-template-columns: 52px minmax(190px,1fr) 110px 150px 140px;
+        gap: 14px;
+        align-items: center;
+      }
+      .analysis-region-full-head {
+        padding: 11px 24px;
+        border-bottom: 1px solid rgba(29,29,27,.08);
+        color: #777b80;
+        background: #f7f7f5;
+        font-size: 10px;
+        font-weight: 500;
+        letter-spacing: .05em;
+        text-transform: uppercase;
+      }
+      .analysis-region-full-list {
+        max-height: calc(88dvh - 154px);
+        margin: 0;
+        padding: 0 24px 16px;
+        overflow: auto;
+        list-style: none;
+      }
+      .analysis-region-full-list li { min-height: 62px; border-bottom: 1px solid rgba(29,29,27,.075); }
+      .analysis-region-full-list li:last-child { border-bottom: 0; }
+      .analysis-region-full-name,
+      .analysis-region-full-value { font-size: 13px; font-weight: 500; }
+      .analysis-region-full-sample { color: #777b80; font-size: 11px; }
+      .analysis-region-full-value { text-align: right; white-space: nowrap; }
       .overview-complete-dialog {
         width: min(860px,calc(100vw - 32px));
         max-height: min(88dvh,820px);
@@ -2632,6 +2663,8 @@
       @media (max-width: 760px) {
         .analysis-ranking .panel-header { align-items: flex-start; gap: 12px; }
         .analysis-ranking .panel-header .analysis-pill { flex: 0 0 auto; }
+        .analysis-regions .panel-header { align-items: flex-start; gap: 12px; }
+        .analysis-panel-actions { align-items: flex-end; flex-direction: column-reverse; }
         .analysis-dealer-dialog { width: calc(100vw - 20px); max-height: 90dvh; border-radius: 18px; }
         .analysis-dealer-dialog .review-dialog-header { padding: 19px 18px 16px; }
         .analysis-dealer-full-head { display: none; }
@@ -2648,6 +2681,20 @@
         .analysis-dealer-full-value { grid-column: 2; grid-row: 2; text-align: left; }
         .analysis-dealer-full-delta { grid-column: 3; grid-row: 2; }
         .analysis-dealer-full-list .badge { grid-column: 3; grid-row: 1; }
+        .analysis-region-full-head { display: none; }
+        .analysis-region-full-list { max-height: calc(90dvh - 112px); padding: 0 18px 14px; }
+        .analysis-region-full-list li {
+          min-height: 70px;
+          grid-template-columns: 30px minmax(0,1fr) auto;
+          grid-template-rows: auto auto;
+          gap: 5px 10px;
+          padding: 12px 0;
+        }
+        .analysis-region-full-list .analysis-dealer-full-rank { grid-row: 1 / 3; align-self: center; }
+        .analysis-region-full-name { grid-column: 2; grid-row: 1; }
+        .analysis-region-full-sample { grid-column: 2; grid-row: 2; }
+        .analysis-region-full-value { grid-column: 3; grid-row: 1; }
+        .analysis-region-full-list .analysis-dealer-full-delta { grid-column: 3; grid-row: 2; }
         .overview-complete-dialog { width: calc(100vw - 20px); max-height: 90dvh; border-radius: 18px; }
         .overview-complete-dialog .review-dialog-header { padding: 19px 18px 16px; }
         .overview-complete-head { display: none; }
