@@ -38,6 +38,10 @@ test("health and overview are calculated from SQLite", async () => {
   const revenueAnalysis = await fetch(`${baseUrl}/api/analysis?kpiId=company_revenue_total`).then((response) => response.json());
   assert.equal(revenueAnalysis.stats.primaryAggregation,"total");
   assert.equal(revenueAnalysis.stats.primaryValue,revenueAnalysis.stats.total);
+  assert.equal(revenueAnalysis.extremes.max.value,revenueAnalysis.stats.max);
+  assert.equal(revenueAnalysis.extremes.min.value,revenueAnalysis.stats.min);
+  assert.ok(revenueAnalysis.extremes.max.name);
+  assert.ok(revenueAnalysis.extremes.min.name);
   const turnoverAnalysis = await fetch(`${baseUrl}/api/analysis?kpiId=inventory_turnover`).then((response) => response.json());
   assert.equal(turnoverAnalysis.stats.primaryAggregation,"average");
   assert.equal(turnoverAnalysis.stats.primaryValue,turnoverAnalysis.stats.average);

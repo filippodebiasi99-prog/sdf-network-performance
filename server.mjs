@@ -524,7 +524,14 @@ function analysisPayload(database, campaignId, kpiId) {
     const values = rows.filter((row) => row.region === region).map((row) => row.value);
     return { region, count: values.length, average: values.reduce((sum,value) => sum + value,0) / values.length };
   }).sort((a,b) => b.average-a.average);
-  return { campaign, kpi, stats:{ total,average,primaryAggregation,primaryValue:primaryAggregation === "total" ? total : average,median,min:sorted[0] ?? 0,max:sorted.at(-1) ?? 0,count:sorted.length }, regions, ranking:rows.slice(0,10) };
+  return {
+    campaign,
+    kpi,
+    stats:{ total,average,primaryAggregation,primaryValue:primaryAggregation === "total" ? total : average,median,min:sorted[0] ?? 0,max:sorted.at(-1) ?? 0,count:sorted.length },
+    extremes:{ min:rows.at(-1) || null,max:rows[0] || null },
+    regions,
+    ranking:rows.slice(0,10)
+  };
 }
 
 function surveyPayload(database, token) {
