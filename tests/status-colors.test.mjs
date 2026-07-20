@@ -73,6 +73,17 @@ test("regional analysis stays capped at eight rows and exposes overflow",()=>{
   assert.match(overrides,/\.analysis-region-full-list li/);
 });
 
+test("complete analysis lists can be filtered without losing their full dataset",()=>{
+  assert.match(portal,/function completeListFilter\(placeholder\)/);
+  assert.match(portal,/data-complete-filter/);
+  assert.match(portal,/data-complete-filter-empty/);
+  assert.match(portal,/normalizeSearch\(row\.textContent\)\.includes\(term\)/);
+  assert.match(portal,/Cerca concessionario, regione, ID o stato/);
+  assert.match(portal,/Cerca regione/);
+  assert.match(overrides,/\.complete-list-filter input/);
+  assert.match(overrides,/\.complete-list-empty/);
+});
+
 test("dealer table gives the primary action a clear label and balanced columns",()=>{
   assert.match(portal,/<span>Apri scheda<\/span>\$\{icon\("chevron"\)\}/);
   assert.match(portal,/aria-label="Apri la scheda di/);
