@@ -690,6 +690,16 @@
       .dealer-search input { padding: 0 14px 0 40px; }
       .dealer-toolbar select { padding: 0 34px 0 13px; }
       .dealer-toolbar .button { min-height: 44px; border-radius: 11px; }
+      .active-filter-summary {
+        grid-column: 1 / -1;
+        margin: 1px 0 0;
+        padding-top: 11px;
+        border-top: 1px solid rgba(29,29,27,.07);
+        color: #747572;
+        font-size: 11px;
+        line-height: 1.35;
+      }
+      .active-filter-summary strong { color: #343633; font-weight: 500; }
       .dealers-table-panel #dealer-results .table-wrap {
         max-height: min(68dvh,720px);
         overflow: auto;
