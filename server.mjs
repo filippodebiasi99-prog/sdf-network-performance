@@ -442,7 +442,7 @@ function overviewPayload(database, campaignId) {
   const performance = {
     metrics:[
       metricSummary("company_revenue_total"),
-      { code:"parts_margin_average",name:"Marginalità media ricambi",unit:"%",kind:"percentage",value:null,average:null,count:0,note:"Formula da confermare" },
+      metricSummary("sdf_parts_revenue_total"),
       metricSummary("parts_revenue_total"),
       metricSummary("inventory_turnover","average"),
       metricSummary("inventory_end_value")
@@ -504,14 +504,27 @@ function analysisPayload(database, campaignId, kpiId) {
   if (!campaign || !kpi) throw Object.assign(new Error("Campagna o KPI non trovati"), { status: 404 });
   const rows = database.prepare(`SELECT d.id,d.name,d.region,d.area,d.manager,v.value FROM kpi_values v JOIN submissions s ON s.id=v.submission_id JOIN dealers d ON d.id=s.dealer_id WHERE s.campaign_id=? AND v.kpi_id=? AND s.status IN ('submitted','verify') ORDER BY v.value DESC`).all(campaign.id,kpi.id);
   const sorted = rows.map((row) => row.value).sort((a,b) => a-b);
-  const average = sorted.length ? sorted.reduce((sum,value) => sum + value,0) / sorted.length : 0;
+  const total = sorted.reduce((sum,value) => sum + value,0);
+  const average = sorted.length ? total / sorted.length : 0;
   const middle = Math.floor(sorted.length / 2);
   const median = sorted.length ? (sorted.length % 2 ? sorted[middle] : (sorted[middle-1] + sorted[middle]) / 2) : 0;
+  const additiveKpis = new Set([
+    "company_revenue_total",
+    "parts_revenue_total",
+    "sdf_parts_revenue_total",
+    "external_parts_revenue_total",
+    "external_sdf_parts_revenue_total",
+    "inventory_end_value",
+    "technician_presence_hours",
+    "workshop_worked_hours_total",
+    "customer_sold_hours_total"
+  ]);
+  const primaryAggregation = additiveKpis.has(kpi.code) ? "total" : "average";
   const regions = [...new Set(rows.map((row) => row.region))].map((region) => {
     const values = rows.filter((row) => row.region === region).map((row) => row.value);
     return { region, count: values.length, average: values.reduce((sum,value) => sum + value,0) / values.length };
   }).sort((a,b) => b.average-a.average);
-  return { campaign, kpi, stats:{ average, median, min:sorted[0] ?? 0, max:sorted.at(-1) ?? 0, count:sorted.length }, regions, ranking:rows.slice(0,10) };
+  return { campaign, kpi, stats:{ total,average,primaryAggregation,primaryValue:primaryAggregation === "total" ? total : average,median,min:sorted[0] ?? 0,max:sorted.at(-1) ?? 0,count:sorted.length }, regions, ranking:rows.slice(0,10) };
 }
 
 function surveyPayload(database, token) {

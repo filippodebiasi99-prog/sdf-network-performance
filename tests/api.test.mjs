@@ -33,9 +33,14 @@ test("health and overview are calculated from SQLite", async () => {
   assert.equal(overview.performance.metrics.length,5);
   assert.equal(overview.performance.leaders.length,5);
   assert.ok(overview.performance.leaders[0].value>=overview.performance.leaders[1].value);
-  assert.deepEqual(overview.performance.metrics.map((metric) => metric.code),["company_revenue_total","parts_margin_average","parts_revenue_total","inventory_turnover","inventory_end_value"]);
-  assert.equal(overview.performance.metrics.find((metric) => metric.code === "parts_margin_average").note,"Formula da confermare");
-  assert.ok(overview.performance.metrics.filter((metric) => metric.code !== "parts_margin_average").every((metric) => Number.isFinite(metric.value)));
+  assert.deepEqual(overview.performance.metrics.map((metric) => metric.code),["company_revenue_total","sdf_parts_revenue_total","parts_revenue_total","inventory_turnover","inventory_end_value"]);
+  assert.ok(overview.performance.metrics.every((metric) => Number.isFinite(metric.value)));
+  const revenueAnalysis = await fetch(`${baseUrl}/api/analysis?kpiId=company_revenue_total`).then((response) => response.json());
+  assert.equal(revenueAnalysis.stats.primaryAggregation,"total");
+  assert.equal(revenueAnalysis.stats.primaryValue,revenueAnalysis.stats.total);
+  const turnoverAnalysis = await fetch(`${baseUrl}/api/analysis?kpiId=inventory_turnover`).then((response) => response.json());
+  assert.equal(turnoverAnalysis.stats.primaryAggregation,"average");
+  assert.equal(turnoverAnalysis.stats.primaryValue,turnoverAnalysis.stats.average);
   assert.equal(overview.performance.areas.length,4);
   const expectedLeader = database.prepare(`
     SELECT d.id
