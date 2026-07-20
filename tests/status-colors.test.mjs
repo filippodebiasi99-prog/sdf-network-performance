@@ -41,3 +41,12 @@ test("KPI extrema preserve their descriptions and identify dealers semantically"
   assert.match(overrides,/\.analysis-stat-dealer\.is-min \{ color: var\(--danger\)/);
   assert.match(overrides,/\.analysis-stat-dealer\.is-max \{ color: var\(--success\)/);
 });
+
+test("the top-five chart opens a complete accessible dealer comparison list",()=>{
+  assert.match(portal,/id="open-analysis-dealers">Vedi tutti/);
+  assert.match(portal,/id="analysis-dealer-dialog" class="review-dialog analysis-dealer-dialog"/);
+  assert.match(portal,/dealerComparison\.map/);
+  assert.match(portal,/Dato non disponibile/);
+  assert.match(portal,/open-analysis-dealers"\)\?\.addEventListener\("click"/);
+  assert.match(overrides,/\.analysis-dealer-full-list li/);
+});

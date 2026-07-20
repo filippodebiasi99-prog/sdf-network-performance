@@ -524,13 +524,24 @@ function analysisPayload(database, campaignId, kpiId) {
     const values = rows.filter((row) => row.region === region).map((row) => row.value);
     return { region, count: values.length, average: values.reduce((sum,value) => sum + value,0) / values.length };
   }).sort((a,b) => b.average-a.average);
+  const dealerComparison = database.prepare(`
+    SELECT d.id,d.name,d.region,v.value,
+      COALESCE(s.collection_status,CASE WHEN s.id IS NULL THEN 'NOT_STARTED' WHEN s.status='draft' THEN 'DRAFT' WHEN s.status='verify' THEN 'NEEDS_REVIEW' ELSE 'SUBMITTED' END) AS collection_status
+    FROM campaign_dealers cd
+    JOIN dealers d ON d.id=cd.dealer_id
+    LEFT JOIN submissions s ON s.dealer_id=d.id AND s.campaign_id=cd.campaign_id
+    LEFT JOIN kpi_values v ON v.submission_id=s.id AND v.kpi_id=? AND s.status IN ('submitted','verify')
+    WHERE cd.campaign_id=? AND d.active=1
+    ORDER BY (v.value IS NULL),v.value DESC,d.name
+  `).all(kpi.id,campaign.id).map((row,index) => ({ ...row,rank:row.value === null ? null : index+1 }));
   return {
     campaign,
     kpi,
     stats:{ total,average,primaryAggregation,primaryValue:primaryAggregation === "total" ? total : average,median,min:sorted[0] ?? 0,max:sorted.at(-1) ?? 0,count:sorted.length },
     extremes:{ min:rows.at(-1) || null,max:rows[0] || null },
     regions,
-    ranking:rows.slice(0,10)
+    ranking:rows.slice(0,10),
+    dealerComparison
   };
 }
 
