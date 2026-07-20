@@ -86,6 +86,158 @@
     return `${number.toLocaleString("it-IT",{maximumFractionDigits:1})}${metric?.unit ? ` ${metric.unit}` : ""}`;
   }
 
+  let customSelectPopover=null;
+  let activeCustomSelect=null;
+  let customSelectEventsBound=false;
+
+  function refreshCustomSelect(select) {
+    const trigger=select?.closest(".custom-select-control")?.querySelector(".custom-select-trigger");
+    if (!trigger) return;
+    const selected=select.options[select.selectedIndex];
+    trigger.querySelector(".custom-select-value").textContent=selected?.textContent?.trim() || "Seleziona";
+    trigger.disabled=select.disabled;
+    trigger.classList.toggle("is-placeholder",!select.value);
+  }
+
+  function closeCustomSelect({restoreFocus=false}={}) {
+    if (!activeCustomSelect) return;
+    const {trigger,wrapper}=activeCustomSelect;
+    trigger.setAttribute("aria-expanded","false");
+    wrapper.classList.remove("is-open");
+    if (customSelectPopover) {
+      if (typeof customSelectPopover.hidePopover==="function") {
+        try { customSelectPopover.hidePopover(); } catch {}
+      }
+      customSelectPopover.hidden=true;
+    }
+    activeCustomSelect=null;
+    if (restoreFocus) trigger.focus();
+  }
+
+  function positionCustomSelect() {
+    if (!activeCustomSelect || !customSelectPopover) return;
+    const rect=activeCustomSelect.trigger.getBoundingClientRect();
+    const viewportPadding=12;
+    const width=Math.min(Math.max(rect.width,220),window.innerWidth-viewportPadding*2);
+    const estimatedHeight=Math.min(300,customSelectPopover.querySelectorAll("button").length*43+12);
+    const below=window.innerHeight-rect.bottom-viewportPadding;
+    const above=rect.top-viewportPadding;
+    const openAbove=below<Math.min(170,estimatedHeight)&&above>below;
+    const available=Math.max(110,openAbove?above:below);
+    customSelectPopover.style.width=`${width}px`;
+    customSelectPopover.style.maxHeight=`${Math.min(300,available)}px`;
+    customSelectPopover.style.left=`${Math.min(Math.max(viewportPadding,rect.left),window.innerWidth-width-viewportPadding)}px`;
+    customSelectPopover.style.top=openAbove?`${Math.max(viewportPadding,rect.top-Math.min(estimatedHeight,available)-6)}px`:`${rect.bottom+6}px`;
+  }
+
+  function focusCustomSelectOption(index) {
+    const options=[...customSelectPopover?.querySelectorAll(".custom-select-option:not(:disabled)") || []];
+    if (!options.length) return;
+    options[(index+options.length)%options.length].focus();
+  }
+
+  function openCustomSelect(select,trigger,{focusSelected=false}={}) {
+    if (activeCustomSelect?.select===select) { closeCustomSelect(); return; }
+    closeCustomSelect();
+    if (!customSelectPopover) {
+      customSelectPopover=document.createElement("div");
+      customSelectPopover.id="custom-select-popover";
+      customSelectPopover.className="custom-select-popover";
+      customSelectPopover.setAttribute("popover","manual");
+      customSelectPopover.setAttribute("role","listbox");
+      document.body.append(customSelectPopover);
+    }
+    const wrapper=select.closest(".custom-select-control");
+    customSelectPopover.replaceChildren();
+    [...select.options].filter(option=>!option.hidden).forEach((option,index)=>{
+      const item=document.createElement("button");
+      item.type="button";
+      item.className="custom-select-option";
+      item.setAttribute("role","option");
+      item.setAttribute("aria-selected",String(option.selected));
+      item.disabled=option.disabled;
+      item.innerHTML=`<span class="custom-select-check" aria-hidden="true">${option.selected?"✓":""}</span><span></span>`;
+      item.lastElementChild.textContent=option.textContent.trim();
+      item.addEventListener("click",()=>{
+        if (select.value!==option.value) {
+          select.value=option.value;
+          select.dispatchEvent(new Event("input",{bubbles:true}));
+          select.dispatchEvent(new Event("change",{bubbles:true}));
+        }
+        refreshCustomSelect(select);
+        closeCustomSelect({restoreFocus:true});
+      });
+      item.addEventListener("keydown",event=>{
+        const items=[...customSelectPopover.querySelectorAll(".custom-select-option:not(:disabled)")];
+        const current=items.indexOf(event.currentTarget);
+        if (event.key==="ArrowDown") { event.preventDefault();focusCustomSelectOption(current+1); }
+        if (event.key==="ArrowUp") { event.preventDefault();focusCustomSelectOption(current-1); }
+        if (event.key==="Home") { event.preventDefault();focusCustomSelectOption(0); }
+        if (event.key==="End") { event.preventDefault();focusCustomSelectOption(items.length-1); }
+        if (event.key==="Escape") { event.preventDefault();closeCustomSelect({restoreFocus:true}); }
+        if (event.key==="Tab") closeCustomSelect();
+      });
+      item.dataset.optionIndex=String(index);
+      customSelectPopover.append(item);
+    });
+    activeCustomSelect={select,trigger,wrapper};
+    trigger.setAttribute("aria-expanded","true");
+    wrapper.classList.add("is-open");
+    customSelectPopover.hidden=false;
+    if (typeof customSelectPopover.showPopover==="function") {
+      try { customSelectPopover.showPopover(); } catch {}
+    }
+    positionCustomSelect();
+    if (focusSelected) requestAnimationFrame(()=>{
+      const selected=[...customSelectPopover.querySelectorAll(".custom-select-option")].findIndex(item=>item.getAttribute("aria-selected")==="true");
+      focusCustomSelectOption(Math.max(0,selected));
+    });
+  }
+
+  function enhanceSelects(root=document) {
+    root.querySelectorAll("select:not([multiple])").forEach(select=>{
+      if (select.dataset.customSelect==="true") { refreshCustomSelect(select); return; }
+      select.dataset.customSelect="true";
+      const wrapper=document.createElement("span");
+      wrapper.className=`custom-select-control ${[...select.classList].map(name=>`custom-select--${name}`).join(" ")}`.trim();
+      select.before(wrapper);
+      wrapper.append(select);
+      select.classList.add("custom-select-native");
+      select.tabIndex=-1;
+      select.setAttribute("aria-hidden","true");
+      const trigger=document.createElement("button");
+      trigger.type="button";
+      trigger.className="custom-select-trigger";
+      trigger.setAttribute("aria-haspopup","listbox");
+      trigger.setAttribute("aria-expanded","false");
+      trigger.setAttribute("aria-controls","custom-select-popover");
+      const label=select.getAttribute("aria-label") || (select.id?document.querySelector(`label[for="${CSS.escape(select.id)}"]`)?.textContent.trim():"") || select.closest("label")?.querySelector(":scope > span")?.textContent.trim() || "Seleziona opzione";
+      trigger.setAttribute("aria-label",label);
+      trigger.innerHTML='<span class="custom-select-value"></span><svg viewBox="0 0 12 12" aria-hidden="true"><path d="m2.5 4.25 3.5 3.5 3.5-3.5"/></svg>';
+      wrapper.append(trigger);
+      refreshCustomSelect(select);
+      select.addEventListener("change",()=>refreshCustomSelect(select));
+      trigger.addEventListener("click",()=>openCustomSelect(select,trigger));
+      trigger.addEventListener("keydown",event=>{
+        if (["ArrowDown","ArrowUp","Enter"," "].includes(event.key)) {
+          event.preventDefault();
+          if (!activeCustomSelect || activeCustomSelect.select!==select) openCustomSelect(select,trigger,{focusSelected:true});
+        }
+        if (event.key==="Escape") closeCustomSelect({restoreFocus:true});
+      });
+    });
+    if (!customSelectEventsBound) {
+      customSelectEventsBound=true;
+      document.addEventListener("pointerdown",event=>{
+        if (activeCustomSelect&&!activeCustomSelect.wrapper.contains(event.target)&&!customSelectPopover?.contains(event.target)) closeCustomSelect();
+      });
+      document.addEventListener("scroll",event=>{
+        if (activeCustomSelect&&!customSelectPopover?.contains(event.target)) closeCustomSelect();
+      },true);
+      window.addEventListener("resize",positionCustomSelect);
+    }
+  }
+
   const searchPages = [
     { type:"page",id:"overview",label:"Overview",description:"Performance e stato della rete",page:"overview",icon:"overview",keywords:"dashboard rete performance" },
     { type:"page",id:"dealers",label:"Concessionari",description:"Anagrafica, link e stato delle compilazioni",page:"dealers",icon:"dealers",keywords:"dealer anagrafica link qr" },
@@ -515,13 +667,14 @@
     hydrateIcons(main);
     syncRoleUi(publicPage);
     syncShell();
+    enhanceSelects(document);
     bindPageEvents();
     bindFunctionalEvents();
     updateNavigation(page === "dealer" ? "dealers" : publicPage ? "" : page);
     document.querySelector("#mobile-page-title").textContent = ({overview:"Overview",dealers:"Concessionari",dealer:"Dettaglio concessionario",analysis:"Analisi KPI",surveys:"Rilevazioni",reports:"Report",help:"Centro assistenza",survey:"Compilazione KPI",collection:"Compilazione",confirmation:"Conferma"})[page] || "Portale KPI";
     clearInterval(state.poller);
     if (page === "overview") state.poller = setInterval(async () => {
-      try { state.overview = await api(`/api/overview?campaignId=${campaignId()}`); if (currentPage === "overview") { main.innerHTML=portalOverviewPage(); hydrateIcons(main); bindPageEvents(); bindFunctionalEvents(); syncShell(); } } catch {}
+      try { state.overview = await api(`/api/overview?campaignId=${campaignId()}`); if (currentPage === "overview") { main.innerHTML=portalOverviewPage(); hydrateIcons(main); enhanceSelects(main); bindPageEvents(); bindFunctionalEvents(); syncShell(); } } catch {}
     },20_000);
     window.scrollTo({top:0,behavior:"instant"});
     if (page === "help" && options.guideId) requestAnimationFrame(()=>document.querySelector(`#help-${CSS.escape(options.guideId)}`)?.scrollIntoView({block:"start"}));
@@ -557,7 +710,7 @@
     main.querySelector("#dealer-search")?.addEventListener("input",portalFilter);
     main.querySelector("#region-filter")?.addEventListener("change",portalFilter);
     main.querySelector("#status-filter")?.addEventListener("change",portalFilter);
-    main.querySelector("#reset-filters")?.addEventListener("click",() => setTimeout(portalFilter));
+    main.querySelector("#reset-filters")?.addEventListener("click",() => setTimeout(()=>{main.querySelectorAll("#region-filter,#status-filter").forEach(refreshCustomSelect);portalFilter()}));
     const getLink = (dealerId) => api(`/api/dealers/${encodeURIComponent(dealerId)}/collection-link?campaignId=${encodeURIComponent(campaignId())}`);
     main.querySelectorAll("[data-copy-link]").forEach((button) => button.addEventListener("click",async () => {
       try { const link=await getLink(button.dataset.copyLink); await navigator.clipboard.writeText(link.url); showToast("Link di compilazione copiato."); }
@@ -637,6 +790,7 @@
       try {
         const result=await api(`/api/campaigns/${encodeURIComponent(campaignId())}/distribution`);const eligible=result.recipients.filter(item=>["NOT_STARTED","DRAFT","REOPENED"].includes(item.collection_status));
         main.querySelector("#distribution-content").innerHTML=`<div class="communication-fields"><label><span>Tipo comunicazione</span><select name="type"><option value="reminder">Reminder per mancanti e bozze</option><option value="initial">Invio iniziale</option></select></label><label><span>Testo base</span><textarea name="reminderText" rows="4" required>${escapeHtml(result.settings.reminderText)}</textarea></label><label><span>Firma</span><input name="signature" value="${escapeHtml(result.settings.signature)}" required></label></div><div class="distribution-summary"><strong>${result.recipients.length} concessionari associati</strong><span>${result.recipients.filter(item=>item.issues.length).length} con anomalie anagrafiche · ${eligible.length} da sollecitare</span></div><div class="recipient-list">${result.recipients.map(item=>`<label class="${item.issues.length?"has-issues":""}"><input type="checkbox" name="dealerIds" value="${escapeHtml(item.id)}" ${!item.issues.length&&eligible.includes(item)?"checked":""}><span><strong>${escapeHtml(item.name)}</strong><small>${escapeHtml(item.email||"Email mancante")} · ${escapeHtml(item.collection_status)}</small><code>${escapeHtml(item.link)}</code>${item.issues.map(issue=>`<em>${escapeHtml(issue)}</em>`).join("")}</span></label>`).join("")}</div>`;
+        enhanceSelects(main.querySelector("#distribution-content"));
         main.querySelector("#distribution-dialog")?.showModal();
       } catch (error) { showToast(error.message); }
     });
@@ -659,9 +813,9 @@
     const createCampaign = main.querySelector("#create-campaign");
     const campaignDialog=main.querySelector("#campaign-dialog"),campaignForm=main.querySelector("#campaign-form");
     const updateDealerCount=()=>{const selected=campaignForm?.querySelectorAll('[name="dealerIds"]:checked').length||0;const target=main.querySelector("#campaign-dealer-count");if(target)target.textContent=`${selected} selezionati`};
-    if (createCampaign) createCampaign.addEventListener("click",()=>{campaignForm.reset();campaignForm.campaign_id.value="";const year=new Date().getFullYear()+1;campaignForm.name.value=`Rilevazione 1 — ${year}`;campaignForm.year.value=year;campaignForm.survey_no.value=1;campaignForm.open_date.value=`${year}-01-15`;campaignForm.close_date.value=`${year}-03-31`;main.querySelector("#campaign-dialog-title").textContent="Nuova rilevazione";updateDealerCount();campaignDialog.showModal()});
+    if (createCampaign) createCampaign.addEventListener("click",()=>{campaignForm.reset();campaignForm.campaign_id.value="";const year=new Date().getFullYear()+1;campaignForm.name.value=`Rilevazione 1 — ${year}`;campaignForm.year.value=year;campaignForm.survey_no.value=1;campaignForm.open_date.value=`${year}-01-15`;campaignForm.close_date.value=`${year}-03-31`;refreshCustomSelect(campaignForm.parent_campaign_id);main.querySelector("#campaign-dialog-title").textContent="Nuova rilevazione";updateDealerCount();campaignDialog.showModal()});
     campaignForm?.querySelector("#select-all-campaign-dealers")?.addEventListener("change",event=>{campaignForm.querySelectorAll('[name="dealerIds"]').forEach(input=>input.checked=event.target.checked);updateDealerCount()});campaignForm?.querySelectorAll('[name="dealerIds"]').forEach(input=>input.addEventListener("change",updateDealerCount));
-    main.querySelectorAll("[data-edit-campaign]").forEach(button=>button.addEventListener("click",()=>{const item=state.campaigns.campaigns.find(row=>row.id===button.dataset.editCampaign);campaignForm.reset();for(const name of ["campaign_id","name","year","survey_no","open_date","close_date","parent_campaign_id"])if(campaignForm[name])campaignForm[name].value=name==="campaign_id"?item.id:item[name]||"";campaignForm.querySelectorAll('[name="dealerIds"]').forEach(input=>input.checked=item.dealerIds.includes(input.value));main.querySelector("#campaign-dialog-title").textContent="Modifica rilevazione";updateDealerCount();campaignDialog.showModal()}));
+    main.querySelectorAll("[data-edit-campaign]").forEach(button=>button.addEventListener("click",()=>{const item=state.campaigns.campaigns.find(row=>row.id===button.dataset.editCampaign);campaignForm.reset();for(const name of ["campaign_id","name","year","survey_no","open_date","close_date","parent_campaign_id"])if(campaignForm[name])campaignForm[name].value=name==="campaign_id"?item.id:item[name]||"";refreshCustomSelect(campaignForm.parent_campaign_id);campaignForm.querySelectorAll('[name="dealerIds"]').forEach(input=>input.checked=item.dealerIds.includes(input.value));main.querySelector("#campaign-dialog-title").textContent="Modifica rilevazione";updateDealerCount();campaignDialog.showModal()}));
     campaignForm?.addEventListener("submit",async(event)=>{event.preventDefault();const data=new FormData(campaignForm);const id=data.get("campaign_id");const payload={name:data.get("name"),year:Number(data.get("year")),survey_no:Number(data.get("survey_no")),open_date:data.get("open_date"),close_date:data.get("close_date"),parent_campaign_id:data.get("parent_campaign_id")||null,dealerIds:data.getAll("dealerIds")};try{if(id){await api(`/api/campaigns/${encodeURIComponent(id)}`,{method:"PUT",body:JSON.stringify(payload)});const existing=state.campaigns.campaigns.find(item=>item.id===id);if(existing.status==="draft")await api(`/api/campaigns/${encodeURIComponent(id)}/dealers`,{method:"PUT",body:JSON.stringify({dealerIds:payload.dealerIds})})}else await api("/api/campaigns",{method:"POST",body:JSON.stringify(payload)});invalidateDataViews();state.config=null;showToast("Rilevazione salvata.");campaignDialog.close();await portalRenderPage("surveys")}catch(error){showToast(error.message)}});
     main.querySelectorAll("[data-campaign-status]").forEach(button=>button.addEventListener("click",async()=>{if(!confirm(`Confermare l'operazione sulla rilevazione?`))return;try{await api(`/api/campaigns/${encodeURIComponent(button.dataset.campaignActionId)}/status`,{method:"POST",body:JSON.stringify({status:button.dataset.campaignStatus})});invalidateDataViews();state.config=null;showToast("Stato rilevazione aggiornato.");await portalRenderPage("surveys")}catch(error){showToast(error.message)}}));
     main.querySelectorAll("[data-duplicate-campaign]").forEach(button=>button.addEventListener("click",async()=>{const source=state.campaigns.campaigns.find(item=>item.id===button.dataset.duplicateCampaign);const year=source.year+1;try{await api(`/api/campaigns/${encodeURIComponent(source.id)}/duplicate`,{method:"POST",body:JSON.stringify({name:`${source.name} — copia ${year}`,year,open_date:`${year}-01-01`,close_date:`${year}-12-31`})});invalidateDataViews();state.config=null;showToast("Rilevazione duplicata in bozza.");await portalRenderPage("surveys")}catch(error){showToast(error.message)}}));

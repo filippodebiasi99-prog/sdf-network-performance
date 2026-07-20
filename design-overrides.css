@@ -2154,3 +2154,117 @@
         .help-design-page .help-guide-body li { padding-left: 32px; }
         .help-design-page .help-guide-body .button { width: 100%; margin-left: 0; }
       }
+
+      /* Dropdown proprietari: sostituiscono i menu nativi del sistema operativo. */
+      .custom-select-control {
+        position: relative;
+        width: 100%;
+        min-width: 0;
+        display: inline-block;
+        vertical-align: middle;
+      }
+      .custom-select-native {
+        position: absolute !important;
+        width: 1px !important;
+        height: 1px !important;
+        margin: -1px !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+        clip: rect(0 0 0 0) !important;
+        clip-path: inset(50%) !important;
+        border: 0 !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        white-space: nowrap !important;
+      }
+      .custom-select-trigger {
+        width: 100%;
+        min-width: 0;
+        min-height: 44px;
+        display: grid;
+        grid-template-columns: minmax(0,1fr) 16px;
+        align-items: center;
+        gap: 10px;
+        padding: 0 13px;
+        border: 1px solid rgba(29,29,27,.12);
+        border-radius: 11px;
+        color: #1d1d1b;
+        background: #fff;
+        box-shadow: 0 1px 2px rgba(29,29,27,.02);
+        font-size: 12px;
+        line-height: 1.2;
+        font-weight: 400;
+        text-align: left;
+        cursor: pointer;
+        transition: border-color .14s ease,background .14s ease,box-shadow .14s ease;
+      }
+      .custom-select-trigger:hover { border-color: rgba(29,29,27,.22); background: #fdfdfc; }
+      .custom-select-trigger:focus-visible { outline: 0; border-color: rgba(29,29,27,.3); box-shadow: 0 0 0 3px rgba(29,29,27,.07); }
+      .custom-select-control.is-open .custom-select-trigger { border-color: rgba(243,106,21,.42); box-shadow: 0 0 0 3px rgba(243,106,21,.075); }
+      .custom-select-trigger:disabled { color: #9a9b98; background: #f3f3f1; cursor: not-allowed; }
+      .custom-select-value { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .custom-select-trigger svg { width: 12px; height: 12px; justify-self: end; overflow: visible; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; transition: transform .16s ease; }
+      .custom-select-control.is-open .custom-select-trigger svg { transform: rotate(180deg); }
+      .custom-select-popover {
+        position: fixed;
+        z-index: 1000;
+        inset: auto;
+        margin: 0;
+        padding: 6px;
+        overflow: auto;
+        border: 1px solid rgba(29,29,27,.1);
+        border-radius: 12px;
+        color: #1d1d1b;
+        background: rgba(255,255,255,.98);
+        box-shadow: 0 18px 45px rgba(29,29,27,.14),0 3px 10px rgba(29,29,27,.06);
+        opacity: 0;
+        transform: translateY(-4px) scale(.985);
+        transform-origin: top center;
+      }
+      .custom-select-popover:popover-open,
+      .custom-select-popover:not([hidden]) { animation: custom-select-in .16s cubic-bezier(.16,1,.3,1) forwards; }
+      .custom-select-popover[hidden] { display: none; }
+      @keyframes custom-select-in { to { opacity: 1; transform: translateY(0) scale(1); } }
+      .custom-select-option {
+        width: 100%;
+        min-height: 42px;
+        display: grid;
+        grid-template-columns: 20px minmax(0,1fr);
+        align-items: center;
+        gap: 8px;
+        padding: 7px 10px;
+        border: 0;
+        border-radius: 8px;
+        color: #4f514e;
+        background: transparent;
+        font-size: 12px;
+        line-height: 1.35;
+        font-weight: 400;
+        text-align: left;
+        cursor: pointer;
+      }
+      .custom-select-option:hover,
+      .custom-select-option:focus-visible { outline: 0; color: #1d1d1b; background: #f3f3f1; }
+      .custom-select-option[aria-selected="true"] { color: #d9570e; background: rgba(243,106,21,.07); }
+      .custom-select-option:disabled { opacity: .45; cursor: not-allowed; }
+      .custom-select-check { color: #f36a15; font-size: 12px; font-weight: 500; text-align: center; }
+      .analysis-design-page .analysis-filter .custom-select-trigger { min-height: 46px; font-size: 13px; font-weight: 500; }
+      .dealer-toolbar .custom-select-control { width: 100%; }
+      .demo-role-control .custom-select-control { width: auto; min-width: 82px; }
+      .demo-role-control .custom-select-trigger { min-height: 34px; padding: 0 7px 0 4px; border: 0; border-radius: 9px; background: transparent; box-shadow: none; color: #1d1d1b; font-size: 11px; }
+      .demo-role-control .custom-select-trigger:hover,
+      .demo-role-control .custom-select-trigger:focus-visible { background: #f4f4f2; box-shadow: none; }
+      .operational-form-grid .custom-select-trigger,
+      .communication-fields .custom-select-trigger { min-height: 46px; }
+
+      @media (max-width: 760px) {
+        .custom-select-popover { border-radius: 11px; }
+        .custom-select-option { min-height: 44px; }
+        .demo-role-control .custom-select-control { min-width: 75px; }
+        .demo-role-control .custom-select-trigger { font-size: 10px; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .custom-select-popover:popover-open,
+        .custom-select-popover:not([hidden]) { animation: none; opacity: 1; transform: none; }
+        .custom-select-trigger svg { transition: none; }
+      }
