@@ -73,6 +73,7 @@ test("frontend assets are served with the correct content types", async () => {
     ["/styles.css?v=20","text/css"],
     ["/app.js?v=5","text/javascript"],
     ["/portal.js?v=5","text/javascript"],
+    ["/assets/sdf-favicon.png?v=1","image/png"],
     ["/assets/sdf-logo-primary.png","image/png"],
     ["/assets/sdf-logo-secondary.png","image/png"]
   ];
