@@ -741,6 +741,7 @@
       }
       .dealer-page-button:hover { color: #f36a15; border-color: rgba(243,106,21,.38); }
       .dealer-page-button.is-current { color: #fff; border-color: #f36a15; background: #f36a15; }
+      .dealer-page-button:disabled { opacity: .38; cursor: default; pointer-events: none; }
       .dealer-page-button svg { width: 13px; height: 13px; }
       .dealer-page-ellipsis { padding: 0 2px; color: #8a8c87; }
 

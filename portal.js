@@ -1,5 +1,5 @@
 (() => {
-  const state = { config: null, overview: null, detail: null, analysis: null, campaigns: null, collection: null, collectionToken: null, online: false, poller: null, role:localStorage.getItem("sdf-demo-role") === "SDF" ? "SDF" : "JET", autosaveTimer:null,searchDealers:null,searchItems:[],searchActiveIndex:0,searchTrigger:null };
+  const state = { config: null, overview: null, detail: null, analysis: null, campaigns: null, collection: null, collectionToken: null, online: false, poller: null, role:localStorage.getItem("sdf-demo-role") === "SDF" ? "SDF" : "JET", autosaveTimer:null,searchDealers:null,searchItems:[],searchActiveIndex:0,searchTrigger:null,dealerPage:1 };
   const originalOverviewPage = overviewPage;
 
   statusLabel.draft = "Bozza";
@@ -455,6 +455,7 @@
   }
 
   function portalDealersPage() {
+    state.dealerPage=1;
     const totals = state.overview.totals;
     const jetActions=state.role === "JET" ? `<input id="dealer-import-file" type="file" accept=".csv,text/csv" hidden><button class="button" id="import-dealers">Importa anagrafica</button><button class="button" id="prepare-reminders">${icon("bell")}Prepara comunicazioni</button><button class="button dealer-primary" id="create-dealer">Nuovo concessionario</button>` : "";
     const dealerStats=[
@@ -474,7 +475,15 @@
   }
 
   function portalDealerResults(list) {
-    return `<div class="table-wrap"><table class="dealers-table"><thead><tr><th>Concessionario</th><th>Campagna</th><th>Stato</th><th>Ultimo invio</th><th>Azioni</th></tr></thead><tbody>${list.map((dealer) => `<tr data-dealer-row="${escapeHtml(dealer.id)}"><td><button class="dealer-name dealer-link" data-dealer-id="${escapeHtml(dealer.id)}">${escapeHtml(dealer.name)}<small>${escapeHtml(dealer.id)} · ${escapeHtml(dealer.region)}</small></button></td><td>${escapeHtml(state.overview.campaign.name)}</td><td>${collectionStatusBadge(dealer.collection_status)}</td><td>${formatDate(dealer.submitted_at,true)}</td><td><div class="dealer-row-actions row-actions">${state.role === "JET"?`<button class="button compact" data-copy-link="${escapeHtml(dealer.id)}">Copia link</button><button class="button compact" data-show-qr="${escapeHtml(dealer.id)}">QR</button>`:""}<button class="dealer-open row-action" data-dealer-id="${escapeHtml(dealer.id)}" aria-label="Apri la scheda di ${escapeHtml(dealer.name)}"><span>Apri scheda</span>${icon("chevron")}</button></div></td></tr>`).join("")}</tbody></table></div><footer class="dealer-pagination"><span>Visualizzati ${list.length} concessionari</span><nav class="dealer-page-controls" aria-label="Paginazione concessionari"><button class="dealer-page-button is-current" type="button" aria-current="page">1</button></nav></footer>`;
+    const pageSize=15;
+    const pageCount=Math.max(1,Math.ceil(list.length/pageSize));
+    state.dealerPage=Math.max(1,Math.min(state.dealerPage,pageCount));
+    const start=(state.dealerPage-1)*pageSize;
+    const visible=list.slice(start,start+pageSize);
+    const pages=Array.from({length:pageCount},(_,index)=>index+1).map((page)=>`<button class="dealer-page-button ${page===state.dealerPage?"is-current":""}" type="button" data-dealer-page="${page}" ${page===state.dealerPage?'aria-current="page"':""}>${page}</button>`).join("");
+    const controls=pageCount>1?`<button class="dealer-page-button" type="button" data-dealer-page="${state.dealerPage-1}" aria-label="Pagina precedente" ${state.dealerPage===1?"disabled":""}>‹</button>${pages}<button class="dealer-page-button" type="button" data-dealer-page="${state.dealerPage+1}" aria-label="Pagina successiva" ${state.dealerPage===pageCount?"disabled":""}>›</button>`:pages;
+    const range=list.length?`${start+1}–${Math.min(start+pageSize,list.length)} di ${list.length}`:"0";
+    return `<div class="table-wrap"><table class="dealers-table"><thead><tr><th>Concessionario</th><th>Campagna</th><th>Stato</th><th>Ultimo invio</th><th>Azioni</th></tr></thead><tbody>${visible.map((dealer) => `<tr data-dealer-row="${escapeHtml(dealer.id)}"><td><button class="dealer-name dealer-link" data-dealer-id="${escapeHtml(dealer.id)}">${escapeHtml(dealer.name)}<small>${escapeHtml(dealer.id)} · ${escapeHtml(dealer.region)}</small></button></td><td>${escapeHtml(state.overview.campaign.name)}</td><td>${collectionStatusBadge(dealer.collection_status)}</td><td>${formatDate(dealer.submitted_at,true)}</td><td><div class="dealer-row-actions row-actions">${state.role === "JET"?`<button class="button compact" data-copy-link="${escapeHtml(dealer.id)}">Copia link</button><button class="button compact" data-show-qr="${escapeHtml(dealer.id)}">QR</button>`:""}<button class="dealer-open row-action" data-dealer-id="${escapeHtml(dealer.id)}" aria-label="Apri la scheda di ${escapeHtml(dealer.name)}"><span>Apri scheda</span>${icon("chevron")}</button></div></td></tr>`).join("")}</tbody></table></div><footer class="dealer-pagination"><span>Visualizzati ${range} concessionari</span><nav class="dealer-page-controls" aria-label="Paginazione concessionari">${controls}</nav></footer>`;
   }
 
   function bindDealerScrollHandoff() {
@@ -492,7 +501,7 @@
     let wheelReleaseTimer=null;
     const releaseWheelStop=()=>{
       clearTimeout(wheelReleaseTimer);
-      wheelReleaseTimer=setTimeout(()=>{wheelStopsAtTop=false},180);
+      wheelReleaseTimer=setTimeout(()=>{wheelStopsAtTop=false},70);
     };
     scroller.addEventListener("wheel",(event)=>{
       if (event.deltaY<0 && scroller.scrollTop>0) {
@@ -792,47 +801,66 @@
       main.querySelectorAll("[data-help-destination]").forEach(button=>button.addEventListener("click",()=>portalRenderPage(button.dataset.helpDestination)));
     }
     main.querySelectorAll("[data-export-csv]").forEach((button) => button.addEventListener("click", () => { location.href = `/api/reports/csv?campaignId=${campaignId()}`; }));
-    main.querySelectorAll("[data-dealer-id]").forEach((button) => button.addEventListener("click", () => {
-      selectedDealer = dealers.find((dealer) => dealer.id === button.dataset.dealerId) || { id:button.dataset.dealerId };
-      portalRenderPage("dealer",{ dealer:selectedDealer });
-    }));
-    main.querySelectorAll("[data-dealer-row]").forEach((row)=>row.addEventListener("click",(event)=>{
-      if (event.target.closest("button,a,input,select,label")) return;
-      selectedDealer=dealers.find((dealer)=>dealer.id===row.dataset.dealerRow) || {id:row.dataset.dealerRow};
-      portalRenderPage("dealer",{dealer:selectedDealer});
-    }));
     bindDealerScrollHandoff();
-    const portalFilter = () => {
-      const search = main.querySelector("#dealer-search");
-      if (!search || !main.querySelector("#dealer-results")) return;
+    const dealerResults=main.querySelector("#dealer-results");
+    const getLink = (dealerId) => api(`/api/dealers/${encodeURIComponent(dealerId)}/collection-link?campaignId=${encodeURIComponent(campaignId())}`);
+    const filteredDealers=()=>{
+      const search=main.querySelector("#dealer-search");
+      if (!search) return dealers;
       const term = search.value.trim().toLowerCase();
       const region = main.querySelector("#region-filter")?.value || "";
       const status = main.querySelector("#status-filter")?.value || "";
-      const filtered = dealers.filter((dealer) => (!term || `${dealer.name} ${dealer.id}`.toLowerCase().includes(term)) && (!region || dealer.region === region) && (!status || dealer.collection_status === status));
+      return dealers.filter((dealer) => (!term || `${dealer.name} ${dealer.id}`.toLowerCase().includes(term)) && (!region || dealer.region === region) && (!status || dealer.collection_status === status));
+    };
+    const renderDealerResults=(filtered)=>{
+      if (!dealerResults) return;
+      dealerResults.innerHTML=portalDealerResults(filtered);
+      hydrateIcons(dealerResults);
+      bindDealerScrollHandoff();
+    };
+    const portalFilter = () => {
+      const search = main.querySelector("#dealer-search");
+      if (!search || !dealerResults) return;
+      const term = search.value.trim().toLowerCase();
+      const region = main.querySelector("#region-filter")?.value || "";
+      const status = main.querySelector("#status-filter")?.value || "";
+      const filtered=filteredDealers();
       const filterSummary=main.querySelector("#dealer-filter-summary");
       if (filterSummary) filterSummary.textContent=[`${filtered.length} dealer`,`${new Set(filtered.map((dealer)=>dealer.region)).size} regioni`,term?`Ricerca: “${search.value.trim()}”`:null,region?`Regione: ${region}`:null,status?`Stato: ${statusLabel[status] || status}`:"Tutti gli stati"].filter(Boolean).join(" · ");
-      main.querySelector("#dealer-results").innerHTML = portalDealerResults(filtered);
-      hydrateIcons(main.querySelector("#dealer-results"));
-      bindFunctionalEvents();
+      state.dealerPage=1;
+      renderDealerResults(filtered);
     };
     main.querySelector("#dealer-search")?.addEventListener("input",portalFilter);
     main.querySelector("#region-filter")?.addEventListener("change",portalFilter);
     main.querySelector("#status-filter")?.addEventListener("change",portalFilter);
     main.querySelector("#reset-filters")?.addEventListener("click",() => setTimeout(()=>{main.querySelectorAll("#region-filter,#status-filter").forEach(refreshCustomSelect);portalFilter()}));
-    const getLink = (dealerId) => api(`/api/dealers/${encodeURIComponent(dealerId)}/collection-link?campaignId=${encodeURIComponent(campaignId())}`);
-    main.querySelectorAll("[data-copy-link]").forEach((button) => button.addEventListener("click",async () => {
-      try { const link=await getLink(button.dataset.copyLink); await navigator.clipboard.writeText(link.url); showToast("Link di compilazione copiato."); }
-      catch (error) { showToast(error.message); }
-    }));
-    main.querySelectorAll("[data-show-qr]").forEach((button) => button.addEventListener("click",async () => {
-      try {
-        const link=await getLink(button.dataset.showQr); const dealer=dealers.find((item)=>item.id===button.dataset.showQr);
+    dealerResults?.addEventListener("click",async(event)=>{
+      const pageButton=event.target.closest("[data-dealer-page]");
+      if (pageButton) { state.dealerPage=Number(pageButton.dataset.dealerPage); renderDealerResults(filteredDealers()); return; }
+      const copyButton=event.target.closest("[data-copy-link]");
+      if (copyButton) {
+        try { const link=await getLink(copyButton.dataset.copyLink); await navigator.clipboard.writeText(link.url); showToast("Link di compilazione copiato."); }
+        catch (error) { showToast(error.message); }
+        return;
+      }
+      const qrButton=event.target.closest("[data-show-qr]");
+      if (qrButton) {
+        try {
+        const link=await getLink(qrButton.dataset.showQr); const dealer=dealers.find((item)=>item.id===qrButton.dataset.showQr);
         const dialog=main.querySelector("#qr-dialog");
-        dialog.querySelector("#qr-dialog-content").innerHTML=`<p class="eyebrow">Link concessionario</p><h2>${escapeHtml(dealer?.name || button.dataset.showQr)}</h2><img src="${escapeHtml(link.qrUrl)}" alt="QR Code"><code>${escapeHtml(link.url)}</code><div class="inline-actions"><a class="button primary" href="${escapeHtml(link.qrUrl)}" download="qr-${escapeHtml(button.dataset.showQr)}.svg">Scarica SVG</a><button class="button" id="qr-copy">Copia link</button><button class="button" id="qr-print">Stampa</button></div>`;
+        dialog.querySelector("#qr-dialog-content").innerHTML=`<p class="eyebrow">Link concessionario</p><h2>${escapeHtml(dealer?.name || qrButton.dataset.showQr)}</h2><img src="${escapeHtml(link.qrUrl)}" alt="QR Code"><code>${escapeHtml(link.url)}</code><div class="inline-actions"><a class="button primary" href="${escapeHtml(link.qrUrl)}" download="qr-${escapeHtml(qrButton.dataset.showQr)}.svg">Scarica SVG</a><button class="button" id="qr-copy">Copia link</button><button class="button" id="qr-print">Stampa</button></div>`;
         dialog.querySelector("#qr-copy").addEventListener("click",async()=>{ await navigator.clipboard.writeText(link.url); showToast("Link copiato."); });
         dialog.querySelector("#qr-print").addEventListener("click",()=>window.print()); dialog.showModal();
-      } catch (error) { showToast(error.message); }
-    }));
+        } catch (error) { showToast(error.message); }
+        return;
+      }
+      const dealerButton=event.target.closest("[data-dealer-id]");
+      const row=event.target.closest("[data-dealer-row]");
+      if (!dealerButton && (!row || event.target.closest("button,a,input,select,label"))) return;
+      const dealerId=dealerButton?.dataset.dealerId || row.dataset.dealerRow;
+      selectedDealer=dealers.find((dealer)=>dealer.id===dealerId) || {id:dealerId};
+      portalRenderPage("dealer",{dealer:selectedDealer});
+    });
     main.querySelector(".qr-close")?.addEventListener("click",()=>main.querySelector("#qr-dialog")?.close());
     const areaMapHost=main.querySelector(".area-map-svg");
     if (areaMapHost) fetch("/assets/italy-macroareas.svg").then((response)=>response.text()).then((source)=>{
